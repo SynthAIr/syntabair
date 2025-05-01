@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment created by Poetry
+.venv/
+
+# Poetry-specific files
+poetry.lock
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Logs and debugging
+*.log
+*.out
+*.err
+
+# IDE/editor specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Testing / coverage reports
+htmlcov/
+.coverage
+*.cover
+coverage.xml
+pytest_cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# MyPy
+.mypy_cache/
+
+# Pyright
+.pyright/
+
+# Pylint
+.pylint.d/
+
+# Bandit security scan
+.bandit/
+
+# Profiling data
+.prof
+
+# Ignore any folder or subfolder named trash
+**/trash/
+
+# Ignore data and trained models
+data/
+models/
+catboost_info/
+rtf_checkpoints/
+
+
+
