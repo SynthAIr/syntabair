@@ -80,8 +80,21 @@ def get_input_generate(model_dir):
     in_dim = num_tokens * token_dim
     train_z = train_z.view(B, in_dim)
     
+    # Load training parameters
+    params_path = os.path.join(model_dir, "training_params.json")
+    with open(params_path, 'r') as f:
+        params = json.load(f)
+
     # Load decoder
-    pre_decoder = Decoder_model(2, d_numerical, categories, 4, n_head=1, factor=32)
+    pre_decoder = Decoder_model(
+        params.get("vae_layers", 2),           # Default 2 if not found
+        d_numerical, 
+        categories, 
+        params.get("embedding_dim", 4),        # Default 4 if not found
+        n_head=params.get("n_head", 1),        # Default 1 if not found
+        factor=params.get("vae_factor", 32)    # Default 32 if not found
+    )
+    # pre_decoder = Decoder_model(3, d_numerical, categories, 8, n_head=1, factor=64)
     decoder_save_path = os.path.join(ckpt_dir, 'decoder.pt')
     pre_decoder.load_state_dict(torch.load(decoder_save_path, map_location=torch.device('cpu')))
 

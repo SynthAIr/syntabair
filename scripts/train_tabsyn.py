@@ -12,8 +12,9 @@ import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
+
+from syntabair.generators import TabSyn
 from syntabair.preprocessing import preprocess_flight_data
-from src.syntabair.generators import TabSyn
 
 
 def get_column_name_mapping(data_df, num_col_idx, cat_col_idx, target_col_idx, column_names=None):
@@ -209,10 +210,13 @@ def train_tabsyn(
     
     # Step 2: Initialize TabSyn model
     print(f"Initializing TabSyn model...")
+    vae_factor = 32  
+    vae_layers = 2   
+    n_haed = 1      # Number of heads for the transformer
     tabsyn = TabSyn(
         embedding_dim=embedding_dim,
-        vae_factor=64,            # Increased from 32
-        vae_layers=3,             # Increased from 2
+        vae_factor=vae_factor,
+        vae_layers=vae_layers,
         vae_lr=vae_lr,
         max_beta=max_beta,
         min_beta=min_beta,
@@ -246,6 +250,9 @@ def train_tabsyn(
         "min_beta": min_beta,
         "beta_decay": beta_decay,
         "device": device,
+        "vae_layers": vae_layers,
+        "vae_factor": vae_factor,
+        "n_head": n_haed,
     }
     
     with open(os.path.join(model_dir, "training_params.json"), "w") as f:
@@ -290,7 +297,7 @@ def main():
     parser.add_argument(
         "--embedding_dim",
         type=int,
-        default=8,
+        default=4,
         help="Dimension of the embedding space"
     )
     parser.add_argument(

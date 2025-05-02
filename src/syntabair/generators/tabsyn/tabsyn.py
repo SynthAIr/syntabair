@@ -2,6 +2,7 @@
 
 import os
 import numpy as np
+import pandas as pd
 import torch
 import pickle
 
@@ -426,8 +427,8 @@ class TabSyn:
         
         with open(os.path.join(ckpt_dir, 'config.pkl'), 'wb') as f:
             pickle.dump(config, f)
-    
-    def sample(self, n_samples=None, steps=None):
+   
+    def sample(self, n_samples=None, steps=None, batch_size=10000):
         """
         Generate synthetic samples using the trained TabSyn model.
         
@@ -438,6 +439,9 @@ class TabSyn:
             steps (int, optional): 
                 Number of function evaluations for sampling.
                 If None, uses the value from initialization. Defaults to None.
+            batch_size (int, optional):
+                Maximum number of samples to generate in one batch.
+                Defaults to 10000.
                 
         Returns:
             pandas.DataFrame: The generated synthetic data.
@@ -453,68 +457,75 @@ class TabSyn:
         
         if n_samples is None:
             n_samples = train_z.shape[0]
+        
+        print(f"Generating {n_samples} samples...")
+        
+        # Calculate number of batches
+        num_batches = (n_samples + batch_size - 1) // batch_size
+        
+        # Initialize list to store batch DataFrames
+        all_batches = []
+        
+        for batch_idx in range(num_batches):
+            start_idx = batch_idx * batch_size
+            end_idx = min((batch_idx + 1) * batch_size, n_samples)
+            curr_batch_size = end_idx - start_idx
             
-        in_dim = train_z.shape[1]
-        mean = train_z.mean(0)
-        
-        # Load diffusion model if needed
-        diffusion_model_path = os.path.join(self.model_dir, 'ckpt', 'model.pt')
-        if self.diffusion_model is None:
-            denoise_fn = MLPDiffusion(in_dim, 1024).to(self.device)
-            self.diffusion_model = Model(
-                denoise_fn=denoise_fn, 
-                hid_dim=train_z.shape[1]
-            ).to(self.device)
-            self.diffusion_model.load_state_dict(
-                torch.load(diffusion_model_path, map_location=self.device)
-            )
-        
-        # Generate samples
-        if self.verbose:
-            print(f"Generating {n_samples} samples...")
+            print(f"Generating batch {batch_idx+1}/{num_batches} ({curr_batch_size} samples)...")
             
-        # Generate in chunks to avoid OOM
-        chunk_size = 4096
-        chunks = []
-        
-        for start in range(0, n_samples, chunk_size):
-            cur = min(chunk_size, n_samples - start)
+            # Generate this batch
+            in_dim = train_z.shape[1]
+            mean = train_z.mean(0)
+            
+            # Load diffusion model if needed
+            diffusion_model_path = os.path.join(self.model_dir, 'ckpt', 'model.pt')
+            if self.diffusion_model is None:
+                denoise_fn = MLPDiffusion(in_dim, 1024).to(self.device)
+                self.diffusion_model = Model(
+                    denoise_fn=denoise_fn, 
+                    hid_dim=train_z.shape[1]
+                ).to(self.device)
+                self.diffusion_model.load_state_dict(
+                    torch.load(diffusion_model_path, map_location=self.device)
+                )
+            
+            # Generate samples for this batch
             with torch.no_grad():
-                # Use the correct torch.amp.autocast syntax
                 if self.device.startswith('cuda'):
                     with torch.amp.autocast('cuda', enabled=False):
                         x = self._sample_from_diffusion(
-                            self.diffusion_model.denoise_fn_D, cur, in_dim, steps
+                            self.diffusion_model.denoise_fn_D, curr_batch_size, in_dim, steps
                         )
                         x = x * 2 + mean.to(self.device)
                 else:
                     x = self._sample_from_diffusion(
-                        self.diffusion_model.denoise_fn_D, cur, in_dim, steps
+                        self.diffusion_model.denoise_fn_D, curr_batch_size, in_dim, steps
                     )
                     x = x * 2 + mean.to(self.device)
-                        
-            chunks.append(x.cpu())
+            
+            # Process this batch
+            syn_data = x.cpu().numpy()
+            syn_num, syn_cat, syn_target = split_num_cat_target(
+                syn_data, info, num_inverse, cat_inverse, self.device
+            )
+            
+            batch_df = recover_data(syn_num, syn_cat, syn_target, info)
+            
+            # Rename columns
+            idx_name_mapping = info['idx_name_mapping']
+            idx_name_mapping = {int(key): value for key, value in idx_name_mapping.items()}
+            
+            batch_df.rename(columns=idx_name_mapping, inplace=True)
+            
+            all_batches.append(batch_df)
+            
+            # Free memory
             torch.cuda.empty_cache()
-            
-        syn_data = torch.cat(chunks).numpy()
         
-        # Convert to original data format
-        syn_num, syn_cat, syn_target = split_num_cat_target(
-            syn_data, info, num_inverse, cat_inverse, self.device
-        )
+        # Combine all batches
+        combined_df = pd.concat(all_batches, ignore_index=True)
         
-        syn_df = recover_data(syn_num, syn_cat, syn_target, info)
-        
-        # Rename columns
-        idx_name_mapping = info['idx_name_mapping']
-        idx_name_mapping = {int(key): value for key, value in idx_name_mapping.items()}
-        
-        syn_df.rename(columns=idx_name_mapping, inplace=True)
-        
-        if self.verbose:
-            print("Sample generation complete.")
-            
-        return syn_df
+        return combined_df
     
     def _sample_from_diffusion(self, model, num_samples, dim, num_steps=50):
         """Sample from the diffusion model."""

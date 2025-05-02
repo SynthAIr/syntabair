@@ -1,0 +1,11 @@
+# Ignore everything
+**
+
+# But NOT .md files
+!**/*.md
+!**/*.svg
+# But NOT .gitignore files
+!**/.gitignore
+
+# Also don't ignore folders (otherwise Git can't find the .md files inside)
+# !*/

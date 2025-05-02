@@ -13,7 +13,7 @@ import pandas as pd
 from pathlib import Path
 
 from syntabair.preprocessing import reconstruct_original_format
-from src.syntabair.generators import TabSyn
+from syntabair.generators import TabSyn
 
 
 def detect_data_type(model_dir):
