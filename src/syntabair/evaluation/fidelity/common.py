@@ -456,8 +456,6 @@ class SingleColumnMetric(BaseMetric):
 
 """Base class for metrics that compare pairs of columns."""
 
-from sdmetrics.base import BaseMetric
-
 
 class ColumnPairsMetric(BaseMetric):
     """Base class for metrics that compare pairs of columns.

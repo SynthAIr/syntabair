@@ -312,54 +312,6 @@ def evaluate_detection_metrics(real_data, synthetic_data, metadata=FLIGHT_DATA_M
     return results
 
 
-
-# def evaluate_detection_metrics(real_data, synthetic_data, metadata=FLIGHT_DATA_METADATA, sample_size=1000000):
-#     """
-#     Evaluate detection-based metrics with data sampling for large datasets.
-    
-#     Args:
-#         real_data (pd.DataFrame): Real dataset
-#         synthetic_data (pd.DataFrame): Synthetic dataset
-#         metadata (dict, optional): Metadata about the datasets
-#         sample_size (int): Number of rows to sample from each dataset
-        
-#     Returns:
-#         dict: Dictionary with metric results
-#     """
-#     import warnings
-#     from sklearn.exceptions import ConvergenceWarning
-
-#     # Filter out the specific ConvergenceWarning
-#     warnings.filterwarnings('ignore', category=ConvergenceWarning)
-
-#     results = {}
-    
-#     # Sample the data if it's larger than the sample size
-#     if len(real_data) > sample_size:
-#         real_data_sample = real_data.sample(sample_size, random_state=42)
-#     else:
-#         real_data_sample = real_data
-    
-#     if len(synthetic_data) > sample_size:
-#         synthetic_data_sample = synthetic_data.sample(sample_size, random_state=42)
-#     else:
-#         synthetic_data_sample = synthetic_data
-    
-#     print(f"  Using {len(real_data_sample)} real samples and {len(synthetic_data_sample)} synthetic samples")
-    
-#     # Logistic Regression Detection
-
-#     lr_score = LogisticDetection.compute(real_data_sample, synthetic_data_sample, metadata)
-#     results["LogisticDetection"] = lr_score
-#     print(f"  LogisticDetection score: {lr_score:.4f}")
-    
-#     # # SVC Detection
-#     # svc_score = SVCDetection.compute(real_data_sample, synthetic_data_sample, metadata)
-#     # results["SVCDetection"] = svc_score
-#     # print(f"  SVCDetection score: {svc_score:.4f}")
-
-#     return results
-
 def main():
     # Parse command line arguments
     parser = setup_argparse()
