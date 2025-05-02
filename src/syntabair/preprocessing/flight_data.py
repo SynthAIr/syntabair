@@ -367,11 +367,18 @@ def reconstruct_original_format(synthetic_df, default_year=2019):
     # Reconstruct scheduled departure datetime
     synthetic_df['SCHEDULED_DEPARTURE_UTC'] = pd.to_datetime({
         'year': default_year,
-        'month': synthetic_df['SCHEDULED_MONTH'],
-        'day': synthetic_df['SCHEDULED_DAY'],
-        'hour': synthetic_df['SCHEDULED_HOUR'],
-        'minute': synthetic_df['SCHEDULED_MINUTE']
+        'month': synthetic_df['SCHEDULED_MONTH'].round().astype('int16'),
+        'day': synthetic_df['SCHEDULED_DAY'].round().astype('int16'),
+        'hour': synthetic_df['SCHEDULED_HOUR'].round().astype('int16'),
+        'minute': synthetic_df['SCHEDULED_MINUTE'].round().astype('int16')
     })
+    # synthetic_df['SCHEDULED_DEPARTURE_UTC'] = pd.to_datetime({
+    #     'year': default_year,
+    #     'month': synthetic_df['SCHEDULED_MONTH'],
+    #     'day': synthetic_df['SCHEDULED_DAY'],
+    #     'hour': synthetic_df['SCHEDULED_HOUR'],
+    #     'minute': synthetic_df['SCHEDULED_MINUTE']
+    # })
     
     # Compute scheduled arrival time
     synthetic_df['SCHEDULED_ARRIVAL_UTC'] = (

@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder
 from syntabair.preprocessing import preprocess_flight_data, reconstruct_original_format
-from syntabair.generators.copula import GaussianMultivariate
+from syntabair.generators import GaussianMultivariate
 
 
 def train_and_generate(

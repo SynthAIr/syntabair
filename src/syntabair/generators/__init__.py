@@ -1,8 +1,6 @@
-# from .rtf.realtabformer import REaLTabFormer
+from .copula import GaussianMultivariate
 from .ctgan.ctgan import CTGAN
-from .tvae.tvae import TVAE
-from .dpctgan import DPCTGAN
 from .tabsyn import TabSyn
+from .rtf.realtabformer import REaLTabFormer
 
-# __all__ = ["REaLTabFormer", "CTGAN", "TVAE", "DPCTGAN", "TabSyn"]
-__all__ = ["CTGAN", "TVAE", "DPCTGAN", "TabSyn"]
+__all__ = ["GaussianMultivariate", "CTGAN", "TabSyn", "REaLTabFormer"]
