@@ -348,13 +348,22 @@ def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info)
                     value_text = f'{height:.3f}'
                 else:
                     value_text = f'{height:.2f}'
-                
+
+                # NEW: if this is a negative‐value bar for log‐likelihood metrics,
+                # place the label just below the bar; otherwise above
+                if metric in ["BNLogLikelihood", "GMLogLikelihood"] or height < 0:
+                    y = height - 0.01
+                    va = 'top'
+                else:
+                    y = max(height + 0.01, 0.01)
+                    va = 'bottom'
+
                 plt.text(
-                    bar.get_x() + bar.get_width()/2.,
-                    max(height + 0.01, 0.01),
+                    bar.get_x() + bar.get_width() / 2.,
+                    y,
                     value_text,
-                    ha='center', 
-                    va='bottom',
+                    ha='center',
+                    va=va,
                     fontsize=10
                 )
         

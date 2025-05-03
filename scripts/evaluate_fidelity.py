@@ -68,10 +68,10 @@ def setup_argparse():
     
     # Required arguments
     parser.add_argument(
-        "--real_data_path",
+        "--real_test_path",
         type=str,
         required=True,
-        help="Path to the real data CSV file"
+        help="Path to the real test data CSV file"
     )
     
     # Synthetic data arguments
@@ -280,14 +280,15 @@ def evaluate_likelihood_metrics(real_data, synthetic_data, metadata=FLIGHT_DATA_
     return results
 
 
-def evaluate_detection_metrics(real_data, synthetic_data, metadata=FLIGHT_DATA_METADATA):
+def evaluate_detection_metrics(real_data, synthetic_data, metadata=FLIGHT_DATA_METADATA, sample_size=500000):
     """
-    Evaluate detection-based metrics.
+    Evaluate detection-based metrics with data sampling for large datasets.
     
     Args:
         real_data (pd.DataFrame): Real dataset
         synthetic_data (pd.DataFrame): Synthetic dataset
         metadata (dict, optional): Metadata about the datasets
+        sample_size (int): Number of rows to sample from each dataset
         
     Returns:
         dict: Dictionary with metric results
@@ -300,17 +301,31 @@ def evaluate_detection_metrics(real_data, synthetic_data, metadata=FLIGHT_DATA_M
 
     results = {}
     
+    # Sample the data if it's larger than the sample size
+    if len(real_data) > sample_size:
+        real_data_sample = real_data.sample(sample_size, random_state=42)
+    else:
+        real_data_sample = real_data
+    
+    if len(synthetic_data) > sample_size:
+        synthetic_data_sample = synthetic_data.sample(sample_size, random_state=42)
+    else:
+        synthetic_data_sample = synthetic_data
+    
+    print(f"  Using {len(real_data_sample)} real samples and {len(synthetic_data_sample)} synthetic samples")
+    
     # Logistic Regression Detection
-    lr_score = LogisticDetection.compute(real_data, synthetic_data, metadata)
+
+    lr_score = LogisticDetection.compute(real_data_sample, synthetic_data_sample, metadata)
     results["LogisticDetection"] = lr_score
-    print(f"  LogisticDetection score: {lr_score:.4f}")
+    # print(f"  LogisticDetection score: {lr_score:.4f}")
     
     # # SVC Detection
-    # svc_score = SVCDetection.compute(real_data, synthetic_data, metadata)
+    # svc_score = SVCDetection.compute(real_data_sample, synthetic_data_sample, metadata)
     # results["SVCDetection"] = svc_score
+    # print(f"  SVCDetection score: {svc_score:.4f}")
 
     return results
-
 
 def main():
     # Parse command line arguments
@@ -330,7 +345,7 @@ def main():
     print("Loading and preprocessing datasets...")
     
     # Load real dataset
-    real_data = pd.read_csv(args.real_data_path)
+    real_test = pd.read_csv(args.real_test_path)
     
     # Load synthetic datasets
     synthetic_datasets = {}
@@ -340,12 +355,19 @@ def main():
     
     # Preprocess datasets
     print("Preprocessing datasets...")
-    real_data_processed = preprocess_flight_data_for_prediction(real_data)
+    real_test_processed = preprocess_flight_data_for_prediction(real_test)
     
     synthetic_processed = {}
     for name, data in synthetic_datasets.items():
         print(f"  Preprocessing {name} dataset")
         synthetic_processed[name] = preprocess_flight_data_for_prediction(data)
+
+
+    # if synthetic datasets are larger than real dataset, sample them
+    for name, data in synthetic_processed.items():
+        if len(data) > len(real_test_processed):
+            print(f"  Sampling {name} dataset to match size of real Test dataset")
+            synthetic_processed[name] = data.sample(len(real_test_processed), random_state=args.random_seed)
     
     # Prepare to store all evaluation results
     all_results = []
@@ -364,26 +386,26 @@ def main():
         # Statistical metrics
         if "statistical" in metric_categories:
             print("  Evaluating statistical metrics...")
-            stat_results = evaluate_statistical_metrics(real_data_processed, synthetic_data)
+            stat_results = evaluate_statistical_metrics(real_test_processed, synthetic_data)
             dataset_results.update(stat_results)
         
         # Correlation metrics
         if "correlation" in metric_categories:
             print("  Evaluating correlation metrics...")
-            corr_results = evaluate_correlation_metrics(real_data_processed, synthetic_data)
+            corr_results = evaluate_correlation_metrics(real_test_processed, synthetic_data)
             dataset_results.update(corr_results)
         
         # Distribution metrics
         if "distribution" in metric_categories:
             print("  Evaluating distribution metrics...")
-            dist_results = evaluate_distribution_metrics(real_data_processed, synthetic_data)
+            dist_results = evaluate_distribution_metrics(real_test_processed, synthetic_data)
             dataset_results.update(dist_results)
         
         # Likelihood metrics
         if "likelihood" in metric_categories:
             print("  Evaluating likelihood metrics...")
             like_results = evaluate_likelihood_metrics(
-                real_data_processed, 
+                real_test_processed, 
                 synthetic_data, 
             )
             dataset_results.update(like_results)
@@ -391,7 +413,7 @@ def main():
         # Detection metrics
         if "detection" in metric_categories:
             print("  Evaluating detection metrics...")
-            detect_results = evaluate_detection_metrics(real_data_processed, synthetic_data)
+            detect_results = evaluate_detection_metrics(real_test_processed, synthetic_data)
             dataset_results.update(detect_results)
         
         all_results.append(dataset_results)

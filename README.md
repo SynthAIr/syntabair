@@ -53,7 +53,7 @@ python scripts/plot_utility.py --results_dir results/utility --output_dir result
 ### Fidelity
 
 ```bash
-python scripts/evaluate_fidelity.py --real_data_path data/real/train.csv --synthetic_paths data/synthetic/copula.csv  data/synthetic/ctgan.csv data/synthetic/tabsyn.csv data/synthetic/rtf.csv --synthetic_names GaussianCopula CTGAN TabSyn REaLTabFormer --metrics all --output_dir results/fidelity
+python scripts/evaluate_fidelity.py --real_test_path data/real/test.csv --synthetic_paths data/synthetic/copula.csv  data/synthetic/ctgan.csv data/synthetic/tabsyn.csv data/synthetic/rtf.csv --synthetic_names GaussianCopula CTGAN TabSyn REaLTabFormer --metrics all --output_dir results/fidelity
 ```
 
 ```bash
