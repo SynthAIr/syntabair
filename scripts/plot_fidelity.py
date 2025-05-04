@@ -535,7 +535,7 @@ def plot_normalized_radar(results_df, metrics_by_category, output_dir, plot_form
         plt.ylim(0, 1)
         
         # Add legend
-        plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+        plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), fontsize=10)
         
         # Add title
         plt.title(f"{category.title()} Metrics Comparison", fontsize=14)

@@ -163,15 +163,15 @@ Logistic Detection measures how difficult it is for a logistic regression classi
 - **CTGAN**: 0.628
 - **GaussianCopula**: 0.025 (easiest to distinguish)
 
-<!-- ## Comprehensive Fidelity Analysis -->
+## Comprehensive Fidelity Analysis
 
-<!-- ### Overall Heatmap Comparison
+### Overall Heatmap Comparison
 
 ![fidelity_heatmap](fidelity/plots/fidelity_heatmap.png)
 
-The heatmap confirms that **Realtabformer** and **GaussianCopula** excel at preserving correlation structures and statistical tests, while **Realtabformer** also outperforms in distribution, likelihood, and detection metrics. -->
+The heatmap confirms that **Realtabformer** and **GaussianCopula** excel at preserving correlation structures and statistical tests, while **Realtabformer** also outperforms in distribution, likelihood, and detection metrics.
 
-<!-- ### Aggregated Scores by Category
+### Aggregated Scores by Category
 
 ![aggregated_scores](fidelity/plots/aggregated_scores.png)
 
@@ -180,6 +180,6 @@ Across metric categories, **Realtabformer** leads overall, followed by **CTGAN**
 ### Radar Chart Comparison
 
 ![radar_correlation](fidelity/plots/radar_correlation.png)
- -->
+
 
 

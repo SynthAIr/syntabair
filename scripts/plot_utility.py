@@ -53,8 +53,8 @@ def setup_argparse():
         "--plot_types",
         type=str,
         nargs="+",
-        default=["performance", "utility", "feature_importance"],
-        choices=["performance", "utility", "feature_importance"],
+        default=["performance", "utility", "feature_importance", "feature_alignment"],
+        choices=["performance", "utility", "feature_importance", "feature_alignment"],
         help="Types of plots to generate"
     )
     parser.add_argument(
@@ -604,6 +604,219 @@ def plot_feature_importances(importance_df, target, mode, output_dir, top_n=15):
                 dpi=300, bbox_inches='tight')
     plt.close()
 
+def calculate_feature_importance_alignment(importance_df, target, mode, output_dir):
+    """
+    Calculate and plot feature importance alignment scores between real and synthetic data.
+    
+    This function measures how well synthetic data preserves the relative importance of
+    features compared to real data, using cosine similarity and correlation metrics.
+    
+    Args:
+        importance_df (pd.DataFrame): DataFrame containing feature importance results
+        target (str): Target variable
+        mode (str): Prediction mode
+        output_dir (str): Directory to save plots
+    """
+    # Filter data for the target and mode
+    filtered_df = importance_df[(importance_df['Target'] == target) & 
+                               (importance_df['Mode'] == mode)]
+    
+    if filtered_df.empty:
+        print(f"No feature importance data available for {target} with {mode} mode")
+        return None
+    
+    # Get readable title
+    title_base = get_readable_title(target, mode)
+    
+    # Create a directory for alignment score plots
+    alignment_dir = os.path.join(output_dir, f"{target.lower()}_{mode}")
+    os.makedirs(alignment_dir, exist_ok=True)
+    
+    # Get all models and datasets
+    models = filtered_df['Model'].unique()
+    datasets = filtered_df['Dataset'].unique()
+    
+    # We need 'Real' dataset as a reference
+    if 'Real' not in datasets:
+        print(f"Real dataset not found in feature importance data for {target} with {mode} mode")
+        return None
+    
+    # Get synthetic datasets (all datasets except 'Real') in the same order as they appear in datasets
+    # This preserves the order from the original data
+    synthetic_datasets = [d for d in datasets if d != 'Real']
+    
+    if not synthetic_datasets:
+        print(f"No synthetic datasets found in feature importance data for {target} with {mode} mode")
+        return None
+    
+    # Create a DataFrame to store alignment scores
+    alignment_scores = []
+    
+    # For each model and synthetic dataset, calculate alignment score with real data
+    for model in models:
+        model_df = filtered_df[filtered_df['Model'] == model]
+        
+        if model_df.empty:
+            continue
+        
+        # Get feature importance vector for real data
+        real_df = model_df[model_df['Dataset'] == 'Real']
+        if real_df.empty:
+            continue
+        
+        # Create real feature importance vector
+        real_importance = real_df.set_index('Feature')['Importance']
+        
+        # Calculate alignment scores for each synthetic dataset
+        for dataset in synthetic_datasets:
+            synthetic_df = model_df[model_df['Dataset'] == dataset]
+            if synthetic_df.empty:
+                continue
+            
+            # Create synthetic feature importance vector
+            synthetic_importance = synthetic_df.set_index('Feature')['Importance']
+            
+            # Align indices to make sure we're comparing the same features
+            all_features = list(set(real_importance.index) | set(synthetic_importance.index))
+            real_vector = np.array([real_importance.get(f, 0) for f in all_features])
+            synthetic_vector = np.array([synthetic_importance.get(f, 0) for f in all_features])
+            
+            # Calculate cosine similarity
+            cosine_sim = np.dot(real_vector, synthetic_vector) / (
+                np.linalg.norm(real_vector) * np.linalg.norm(synthetic_vector)
+            ) if np.linalg.norm(real_vector) * np.linalg.norm(synthetic_vector) > 0 else 0
+            
+            # Calculate Pearson correlation
+            correlation = np.corrcoef(real_vector, synthetic_vector)[0, 1] if len(all_features) > 1 else 0
+            if np.isnan(correlation):
+                correlation = 0
+            
+            # Store alignment scores
+            alignment_scores.append({
+                'Target': target,
+                'Mode': mode,
+                'Model': model,
+                'Dataset': dataset,
+                'CosineSimScore': cosine_sim,
+                'CorrelationScore': correlation,
+                'NumFeatures': len(all_features)
+            })
+    
+    # Convert to DataFrame
+    alignment_df = pd.DataFrame(alignment_scores)
+    
+    if alignment_df.empty:
+        print(f"Could not calculate alignment scores for {target} with {mode} mode")
+        return None
+    
+    # Calculate average scores across models for each dataset
+    avg_scores = alignment_df.groupby('Dataset')[['CosineSimScore', 'CorrelationScore']].mean().reset_index()
+    
+    # Plot heatmap of alignment scores by model and dataset
+    plt.figure(figsize=(12, 8))
+    
+    # Pivot for cosine similarity scores
+    cosine_heatmap = alignment_df.pivot(index='Model', columns='Dataset', values='CosineSimScore')
+    
+    # Ensure columns are in the same order as synthetic_datasets
+    # This maintains consistency with other plots
+    cosine_heatmap = cosine_heatmap[synthetic_datasets]
+    
+    # Use a custom colormap (viridis)
+    cmap = plt.cm.viridis
+    
+    # Create heatmap
+    ax = sns.heatmap(
+        cosine_heatmap, 
+        annot=True, 
+        cmap=cmap,
+        vmin=0, 
+        vmax=1, 
+        fmt='.2f',
+        cbar_kws={'label': 'Cosine Similarity Score (higher is better)'},
+        linewidths=0.5,
+        linecolor='white',
+        annot_kws={"size": 12}
+    )
+    
+    # Set title and labels
+    plt.title(f'{title_base} - Feature Importance Alignment (Cosine Similarity)', fontsize=14)
+    plt.xlabel('Synthetic Dataset', fontsize=12)
+    plt.ylabel('Model', fontsize=12)
+    
+    # Improve tick label size
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
+    
+    # Add a border around the heatmap
+    for _, spine in ax.spines.items():
+        spine.set_visible(True)
+        spine.set_linewidth(1.0)
+    
+    plt.tight_layout()
+    
+    # Save the heatmap
+    plt.savefig(os.path.join(alignment_dir, f"{target.lower()}_{mode}_cosine_alignment_heatmap.png"), 
+                dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Plot average scores by dataset as a bar chart
+    plt.figure(figsize=(10, 6))
+    
+    # Ensure datasets are in the same order as synthetic_datasets for consistency
+    # Create a new DataFrame with ordered datasets
+    ordered_avg_scores = pd.DataFrame()
+    for dataset in synthetic_datasets:
+        dataset_score = avg_scores[avg_scores['Dataset'] == dataset]
+        if not dataset_score.empty:
+            ordered_avg_scores = pd.concat([ordered_avg_scores, dataset_score])
+    
+    # Use custom color palette
+    colors = get_custom_color_palette(len(synthetic_datasets))
+    
+    # Create bar chart for cosine similarity
+    bars = plt.bar(
+        ordered_avg_scores['Dataset'],
+        ordered_avg_scores['CosineSimScore'],
+        alpha=0.8,
+        color=colors,
+        width=0.6
+    )
+    
+    # Add value annotations on bars
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width()/2.,
+            height + 0.02,
+            f'{height:.2f}',
+            ha='center', 
+            fontsize=12
+        )
+    
+    # Set title and labels
+    plt.title(f'{title_base} - Average Feature Importance Alignment', fontsize=14)
+    plt.xlabel('Synthetic Dataset', fontsize=12)
+    plt.ylabel('Cosine Similarity Score', fontsize=12)
+    plt.ylim(0, 1.1)
+    plt.grid(axis='y', alpha=0.3)
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
+    
+    # Add a horizontal line at 1.0 for reference (perfect alignment)
+    plt.axhline(y=1.0, color='r', linestyle='--', alpha=0.5)
+    plt.text(0.02, 1.02, 'Perfect Alignment', color='r', fontsize=10)
+    
+    plt.tight_layout()
+    
+    # Save the bar chart
+    plt.savefig(os.path.join(alignment_dir, f"{target.lower()}_{mode}_avg_alignment_score.png"), 
+                dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Return the alignment scores DataFrame
+    return alignment_df
+
 def main():
     """Main function to generate plots from CSV results"""
     # Parse command line arguments
@@ -709,8 +922,15 @@ def main():
             if 'feature_importance' in args.plot_types and importance_df is not None:
                 print(f"  Generating feature importance plots")
                 plot_feature_importances(importance_df, target, mode, args.output_dir, args.top_n_features)
-    
+            
+                        # Feature alignment plots
+            if 'feature_alignment' in args.plot_types and importance_df is not None:
+                print(f"  Generating feature alignment plots")
+                alignment_df = calculate_feature_importance_alignment(importance_df, target, mode, args.output_dir)
+                
     print(f"All plots generated and saved to {args.output_dir}")
+    if 'feature_alignment' in args.plot_types:
+        print(f"Feature alignment scores saved to {os.path.join(args.output_dir, 'alignment_scores')}")
 
 
 if __name__ == "__main__":
