@@ -25,10 +25,6 @@
     - [Performance Metrics](#performance-metrics-4)
     - [Utility Scores](#utility-scores-4)
     - [Feature Importance](#feature-importance-4)
-  - [Comparative Analysis](#comparative-analysis)
-    - [Performance Across Prediction Tasks](#performance-across-prediction-tasks)
-    - [Synthetic Data Generator Comparison](#synthetic-data-generator-comparison)
-  - [Summary and Key Findings](#summary-and-key-findings)
 
 ## Overview of Result Types
 
@@ -86,6 +82,14 @@ Each target is evaluated in one or two prediction modes:
 ![Average Feature Importance](utility/plots/departure_delay_min_pre-tactical/feature_importances/departure_delay_min_pre-tactical_all_models_feature_comparison.png)
 *The average feature importance across all models for departure delay prediction shows that temporal features (Scheduled Hour) and airport-specific features (Departure Airport, Arrival Airport) are the strongest predictors. RTF synthetic data most accurately preserves this pattern from real data, followed by TabSyn and CTGAN.  Copula shows less alignment with real data feature importance rankings, explaining its lower utility scores. The feature importance analysis confirms that high-quality synthetic data captures the same predictive relationships as real data, which is crucial for operational forecasting.*
 
+![Average Feature Importance Alignment Scores](utility/plots/departure_delay_min_pre-tactical/departure_delay_min_pre-tactical_avg_alignment_score.png)
+
+
+- REaLTabFormer: 0.99
+- TabSyn: 0.92
+- CTGAN: 0.84
+- GaussianCopula: 0.67
+
 ## Arrival Delay Prediction (Pre-tactical)
 
 ### Performance Metrics
@@ -112,6 +116,14 @@ Each target is evaluated in one or two prediction modes:
 ![Average Feature Importance](utility/plots/arrival_delay_min_pre-tactical/feature_importances/arrival_delay_min_pre-tactical_all_models_feature_comparison.png)
 *Average feature importance across all models for arrival delay prediction reveals that Scheduled Hour, Duration, Day and airport-related features are the most significant predictors. The balance between temporal and spatial features is slightly different than for departure delay prediction, with duration playing a more prominent role. This makes sense, as scheduled duration is a key factor in determining arrival delay. RTF synthetic data most closely preserves this pattern from real data, while other generators show greater deviation in the relative importance of key features.*
 
+![Average Feature Importance Alignment Scores](utility/plots/arrival_delay_min_pre-tactical/arrival_delay_min_pre-tactical_avg_alignment_score.png)
+
+
+- REaLTabFormer: 0.99
+- TabSyn: 0.88
+- CTGAN: 0.71
+- GaussianCopula: 0.67
+
 ## Arrival Delay Prediction (Tactical)
 
 ### Performance Metrics
@@ -137,6 +149,12 @@ Each target is evaluated in one or two prediction modes:
 
 ![Average Feature Importance](utility/plots/arrival_delay_min_tactical/feature_importances/arrival_delay_min_tactical_all_models_feature_comparison.png)
 *Average feature importance in tactical mode shows Departure Delay as the overwhelmingly dominant feature for predicting arrival delay, accounting for over 90% of the predictive power across all models. This dramatic shift from pre-tactical mode demonstrates how real-time departure information fundamentally changes the prediction task. All synthetic datasets correctly capture this strong dependency, though with slight variations in magnitude.*
+
+![Average Feature Importance Alignment Scores](utility/plots/arrival_delay_min_tactical/arrival_delay_min_tactical_avg_alignment_score.png)
+- REaLTabFormer: 1.0
+- TabSyn: 1.0
+- CTGAN: 1.0
+- GaussianCopula: 1.0
 
 ## Turnaround Time Prediction (Pre-tactical)
 
