@@ -1,3 +1,7 @@
+# This file includes code adapted from the REaLTabFormer project:
+# https://github.com/worldbank/REaLTabFormer
+# Licensed under the MIT License
+# Modifications have been made to suit this project's requirements.
 import math
 from typing import Callable, Dict, List, Optional, Tuple, Union
 

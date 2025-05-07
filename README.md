@@ -124,4 +124,9 @@ python scripts/plot_privacy.py --results_dir results/privacy --output_dir result
 
 ## Acknowledgments
 
-This project incorporates code from the [TabSyn](https://github.com/amazon-science/tabsyn) repository by Amazon Science, licensed under the Apache License 2.0. Modifications have been made to the original code.
+This project incorporates code from the following open-source projects:
+
+- [TabSyn](https://github.com/amazon-science/tabsyn) by Amazon Science, licensed under the Apache License 2.0.
+- [REaLTabFormer](https://github.com/worldbank/REaLTabFormer) by The World Bank, licensed under the MIT License.
+
+Modifications have been made to the original code to suit this project's requirements.

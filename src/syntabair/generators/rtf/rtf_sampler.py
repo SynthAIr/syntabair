@@ -1,6 +1,10 @@
 """This module contains the implementation for the sampling
 algorithms used for tabular and relational data generation.
 """
+# This file includes code adapted from the REaLTabFormer project:
+# https://github.com/worldbank/REaLTabFormer
+# Licensed under the MIT License
+# Modifications have been made to suit this project's requirements.
 import logging
 import warnings
 from typing import Any, Dict, List, Optional, Union
