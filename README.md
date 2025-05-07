@@ -130,6 +130,7 @@ This project incorporates code from the following projects:
 * [REaLTabFormer](https://github.com/worldbank/REaLTabFormer) by The World Bank, licensed under the MIT License.
 * [CTGAN](https://github.com/sdv-dev/CTGAN) by DataCebo, Inc., licensed under the Business Source License 1.1.
 * [Copulas](https://github.com/sdv-dev/Copulas) by DataCebo, Inc., licensed under the Business Source License 1.1.
+* - [SDMetrics](https://github.com/sdv-dev/SDMetrics) by MIT Data To AI Lab, licensed under the MIT License.
 
 Modifications have been made to the original code to suit this project's requirements.
 

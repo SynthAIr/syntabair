@@ -1,4 +1,8 @@
 """DCR Baseline Protection metrics."""
+# This file includes code adapted from the SDMetrics project:
+# https://github.com/sdv-dev/SDMetrics
+# Licensed under the MIT License.
+# Modifications have been made to suit this project's requirements.
 
 import warnings
 

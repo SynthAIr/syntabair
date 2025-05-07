@@ -4,6 +4,10 @@ This module implements metrics that measure how well the synthetic data preserve
 the correlation structures found in the real data. It includes metrics for comparing
 Pearson correlation, Spearman rank correlation, and correlation matrix distances.
 """
+# This file includes code adapted from the SDMetrics project:
+# https://github.com/sdv-dev/SDMetrics
+# Licensed under the MIT License.
+# Modifications have been made to suit this project's requirements.
 
 import numpy as np
 import pandas as pd

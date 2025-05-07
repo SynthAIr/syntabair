@@ -1,4 +1,8 @@
 """scikit-learn based DetectionMetrics for single table datasets."""
+# This file includes code adapted from the SDMetrics project:
+# https://github.com/sdv-dev/SDMetrics
+# Licensed under the MIT License.
+# Modifications have been made to suit this project's requirements.
 
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression

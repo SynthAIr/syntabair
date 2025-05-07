@@ -1,3 +1,7 @@
+# This file includes code adapted from the SDMetrics project:
+# https://github.com/sdv-dev/SDMetrics
+# Licensed under the MIT License.
+# Modifications have been made to suit this project's requirements.
 import numpy as np
 import pandas as pd
 from scipy.special import kl_div
