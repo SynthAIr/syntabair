@@ -1,4 +1,8 @@
 """DataTransformer module."""
+# This file includes code adapted from the CTGAN project:
+# https://github.com/sdv-dev/CTGAN
+# Licensed under the Business Source License 1.1.
+# Modifications have been made to suit this project's requirements.
 
 from collections import namedtuple
 
