@@ -1,5 +1,7 @@
 import pandas as pd
-import numpy as np
+import argparse
+from sklearn.model_selection import train_test_split
+
 def read_and_filter_data(data_path, filename, flight_state="InGate"):
     """
     Reads the CSV file and filters rows based on the given flight state.
@@ -203,11 +205,11 @@ def calculate_turnaround_time(df):
 
     return df
 
-def extract_delay_turnaround(data_path, filename):
+def extract_delay_turnaround(input_path):
     """
     Extracts the delay/turnaround time for flights in the given dataset.
     """
-    df = read_and_filter_data(data_path, filename)
+    df = read_and_filter_data(input_path)
     df = select_and_clean_columns(df)
 
     time_cols = [
@@ -244,18 +246,41 @@ def extract_delay_turnaround(data_path, filename):
     df = calculate_turnaround_time(df)
     return df
 
-def prepare_data():
-    """
-    Prepares the flight data for analysis by extracting delay and turnaround information.
-    """
-    # Define the path to the data and the filename
-    data_path='~/tabgen/flight_info/'
-    filename='all_flights.csv'
 
-    df = extract_delay_turnaround(data_path, filename)
-    df.to_csv('../data/real.csv', index=False)
-    print("Data preparation complete. Data saved to ../data/real.csv")
-    return df
+
+def prepare_data(input_path, output_train_path, output_test_path, test_size=0.2, random_state=42):
+    """
+    Prepares the flight data for analysis by extracting delay and turnaround information,
+    and splits the data into train and test sets.
+    """
+    # Extract and process the data
+    df = extract_delay_turnaround(input_path)
+    
+    # Split the data into train and test sets
+    train_df, test_df = train_test_split(df, test_size=test_size, random_state=random_state)
+    
+    # Save the train and test sets to their respective files
+    train_df.to_csv(output_train_path, index=False)
+    test_df.to_csv(output_test_path, index=False)
+    
+    print(f"Data preparation complete.")
+    print(f"Train data saved to {output_train_path}")
+    print(f"Test data saved to {output_test_path}")
+    return train_df, test_df
+
 if __name__ == "__main__":
-    # Call the prepare_data function to execute the data preparation process
-    prepare_data()
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Prepare flight data for analysis and split into train/test sets.")
+    parser.add_argument("--input_path", required=True, help="Path to the input CSV file.")
+    parser.add_argument("--output_train_path", required=True, help="Path to save the train CSV file.")
+    parser.add_argument("--output_test_path", required=True, help="Path to save the test CSV file.")
+    parser.add_argument("--test_size", type=float, default=0.2, help="Proportion of the data to include in the test split (default: 0.2).")
+    parser.add_argument("--random_state", type=int, default=42, help="Random seed for reproducibility (default: 42).")
+    args = parser.parse_args()
+
+    # Call the prepare_data function with the provided arguments
+    prepare_data(args.input_path, args.output_train_path, args.output_test_path, args.test_size, args.random_state)
+
+    # Example usage:
+    # python prepare_data.py --input_path data/flights.csv --output_train_path data/real/train.csv --output_test_path data/real/test.csv --test_size 0.2 --random_state 42
+
