@@ -1,16 +1,19 @@
 # Privacy Evaluation of Synthetic Flight Data
 
 ## Executive Summary
-We evaluated four synthetic flight data generators (GaussianCopula, TVAE, CTGAN, and Realtabformer) using two complementary privacy metrics. **GaussianCopula** offers the best overall privacy protection with balanced performance across both metrics. **CTGAN** excels specifically at preventing overfitting but provides weaker general privacy protection. All models show room for improvement in baseline privacy protection.
+We evaluated four synthetic flight data generators (GaussianCopula, TabSyn, CTGAN, and REaLTabFormer) using two complementary privacy metrics. GaussianCopula offers the best overall privacy protection with balanced performance across both metrics. CTGAN excels specifically at preventing overfitting but provides weaker general privacy protection. All models show room for improvement in baseline privacy protection.
 
 ## Introduction to Privacy Metrics
 
 Privacy in synthetic data requires balancing two key aspects: ensuring synthetic records don't reveal sensitive information from real data while still maintaining utility. Our evaluation uses two Distance-to-Closest-Record (DCR) metrics that measure different privacy dimensions.
 
+Privacy in synthetic data requires balancing two key aspects: ensuring synthetic records don't reveal sensitive information from real data while still maintaining utility. Our evaluation uses two Distance‑to‑Closest‑Record (DCR) metrics that measure different privacy dimensions.
+
 ![DCR Toy Example](dcr.svg)
 
 ### Distance-to-Closest-Record (DCR) Explained
 DCR measures how close each synthetic record is to its nearest neighbor in real data. Larger distances indicate better privacy protection, as synthetic records are less likely to reveal information about specific real records.
+
 
 ### Our Two Privacy Metrics
 
@@ -37,22 +40,23 @@ All DCR calculations normalize each feature's contribution by its range, prevent
 
 ![Baseline Protection Score](privacy/plots/baseline_protection_score.png)
 
-| Model             | Score  | Median DCR (synthetic) | Median DCR (random) |
-|-------------------|-------:|-----------------------:|--------------------:|
-| GaussianCopula    | 0.5353 | 0.2469                | 0.4626              |
-| TVAE              | 0.3780 | 0.1821                | 0.4816              |
-| CTGAN             | 0.3676 | 0.1650                | 0.4510              |
-| Realtabformer     | 0.2874 | 0.1392                | 0.4843              |
+
+Dataset	Score	SyntheticMedianDCR	RandomMedianDCR
+GaussianCopula	0.5441773762486156	0.22744942924835934	0.41931930742134016
+CTGAN	0.3365407550683055	0.12577928061595758	0.37447711223101976
+TabSyn	0.29557495227809016	0.10810994027492703	0.37006640708512695
+REaLTabFormer	0.22539463514983574	0.09378027772591659	0.4171184287852725
+
 
 ### Key Insights
-- **GaussianCopula** provides the strongest baseline protection (0.5353), generating records that are more difficult to link back to specific real records.
-- **Realtabformer** offers the weakest protection (0.2874), with synthetic records remaining noticeably close to real data points.
+- **GaussianCopula** provides the strongest baseline protection (0.54), generating records that are more difficult to link back to specific real records.
+- **Realtabformer** offers the weakest protection (0.22), with synthetic records remaining noticeably close to real data points.
 - No model exceeds 0.6, indicating all synthetic generators still produce data measurably closer to real records than pure random noise would be.
 ---
 ![DCR Comparison](privacy/plots/baseline_protection_dcr_comparison.png)
 
 This comparison highlights the gap between synthetic and random data distances:
-- Random data consistently maintains greater distance from real data (median DCR ≈ 0.46-0.48) 
+- Random data consistently maintains greater distance from real data (median DCR ≈ 0.37-0.41) 
 - Synthetic data shows varying but closer proximity (median DCR ≈ 0.14-0.25)
 - GaussianCopula produces the smallest gap between synthetic and random (0.2156), indicating better privacy protection
 ---
