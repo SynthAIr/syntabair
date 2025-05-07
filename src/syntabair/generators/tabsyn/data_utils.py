@@ -1,4 +1,8 @@
 """Data utility functions for TabSyn."""
+# This file includes code adapted from the TabSyn project:
+# https://github.com/amazon-science/tabsyn
+# Licensed under the Apache License, Version 2.0
+# Modifications have been made to suit this project's requirements.
 
 import numpy as np
 import os

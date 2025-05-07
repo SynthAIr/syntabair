@@ -120,3 +120,8 @@ python scripts/evaluate_privacy.py --real_train_path data/real/train.csv --real_
 ```bash
 python scripts/plot_privacy.py --results_dir results/privacy --output_dir results/privacy/plots --plot_types all
 ```
+
+
+## Acknowledgments
+
+This project incorporates code from the [TabSyn](https://github.com/amazon-science/tabsyn) repository by Amazon Science, licensed under the Apache License 2.0. Modifications have been made to the original code.

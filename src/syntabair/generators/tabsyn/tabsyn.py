@@ -1,4 +1,8 @@
 """TabSyn module for tabular data synthesis."""
+# This file includes code adapted from the TabSyn project:
+# https://github.com/amazon-science/tabsyn
+# Licensed under the Apache License, Version 2.0
+# Modifications have been made to suit this project's requirements.
 
 import os
 import numpy as np
