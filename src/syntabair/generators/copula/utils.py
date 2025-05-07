@@ -1,4 +1,8 @@
 """Utils module."""
+# This file includes code adapted from the Copulas project:
+# https://github.com/sdv-dev/Copulas
+# Licensed under the Business Source License 1.1.
+# Modifications have been made to suit this project's requirements.
 
 import contextlib
 import importlib

@@ -129,8 +129,9 @@ This project incorporates code from the following projects:
 * [TabSyn](https://github.com/amazon-science/tabsyn) by Amazon Science, licensed under the Apache License 2.0.
 * [REaLTabFormer](https://github.com/worldbank/REaLTabFormer) by The World Bank, licensed under the MIT License.
 * [CTGAN](https://github.com/sdv-dev/CTGAN) by DataCebo, Inc., licensed under the Business Source License 1.1.
+* [Copulas](https://github.com/sdv-dev/Copulas) by DataCebo, Inc., licensed under the Business Source License 1.1.
 
 Modifications have been made to the original code to suit this project's requirements.
 
-**Note:** The CTGAN code is subject to the terms of the Business Source License 1.1, which restricts certain uses, particularly in providing Synthetic Data Creation Services to third parties. For more information, refer to the [CTGAN LICENSE file](https://github.com/sdv-dev/CTGAN/blob/master/LICENSE).
+**Note:** The CTGAN and Copulas code are subject to the terms of the Business Source License 1.1, which restricts certain uses, particularly in providing Synthetic Data Creation Services to third parties. For more information, refer to the [CTGAN LICENSE file](https://github.com/sdv-dev/CTGAN/blob/master/LICENSE) and the [Copulas LICENSE file](https://github.com/sdv-dev/Copulas/blob/main/LICENSE).
 
