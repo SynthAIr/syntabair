@@ -1,14 +1,12 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Tuple, List  # Added List type
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
 import umap.umap_ as umap
-
 
 from syntabair.preprocessing import preprocess_flight_data_for_prediction
 
@@ -146,12 +144,50 @@ def apply_umap(embeddings: np.ndarray, min_dist: float, n_neighbors: int, seed: 
         logging.error(f"Error applying UMAP: {e}")
         raise
 
+
+def calculate_month_metrics(
+    df: pd.DataFrame,
+    available_months: List[int]
+) -> Dict[int, Dict]:
+    """Calculate operational metrics for each month."""
+    month_metrics = {}
+    
+    for month in available_months:
+        month_mask = df['SCHEDULED_MONTH'] == month
+        month_data = df[month_mask]
+        
+        metrics = {
+            'Delay': month_data['DEPARTURE_DELAY_MIN'].mean(),
+            'Duration': month_data['SCHEDULED_DURATION_MIN'].mean(),
+            'On-Time %': 100 * (month_data['DEPARTURE_DELAY_MIN'] <= 15).mean(),
+            'Early %': 100 * (month_data['DEPARTURE_DELAY_MIN'] < 0).mean(),
+            'Count': len(month_data)
+        }
+        
+        # Add peak hour if hour data is available
+        if 'SCHEDULED_HOUR' in df.columns:
+            hour_counts = month_data['SCHEDULED_HOUR'].value_counts()
+            if not hour_counts.empty:
+                metrics['Peak Hour'] = hour_counts.idxmax()
+            else:
+                metrics['Peak Hour'] = None
+        
+        # Add turnaround if available
+        if 'TURNAROUND_MIN' in df.columns:
+            metrics['Turnaround'] = month_data['TURNAROUND_MIN'].mean()
+        
+        month_metrics[month] = metrics
+    
+    logging.info(f"Calculated metrics for {len(month_metrics)} months")
+    return month_metrics
+
+
 def create_seasonal_visualization(
     reduced: np.ndarray,
     df: pd.DataFrame,
     output_dir: Path
 ) -> None:
-    """Create small multiples visualization with one plot per month, centroids and density contours."""
+    """Create enhanced seasonal visualization with delay coloring and statistics."""
     # Create month categories
     month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     
@@ -159,7 +195,8 @@ def create_seasonal_visualization(
         'Month': df['SCHEDULED_MONTH'],
         'Month_Name': df['SCHEDULED_MONTH'].map(lambda x: month_names[int(x)-1]),
         'UMAP1': reduced[:, 0],
-        'UMAP2': reduced[:, 1]
+        'UMAP2': reduced[:, 1],
+        'Delay': df['DEPARTURE_DELAY_MIN']
     })
     
     # Get the unique months in the data
@@ -167,6 +204,9 @@ def create_seasonal_visualization(
     # Filter out months with less than 10 points
     month_counts = month_data['Month'].value_counts()
     available_months = [month for month in available_months if month_counts[month] > 10]
+    
+    # Calculate metrics for each month
+    month_metrics = calculate_month_metrics(df, available_months)
     
     # Create a grid of subplots (2x2 for 4 months)
     fig, axes = plt.subplots(2, 2, figsize=(16, 14), sharex=True, sharey=True)
@@ -185,13 +225,17 @@ def create_seasonal_visualization(
     y_min -= y_padding
     y_max += y_padding
     
-    # Use custom color palette for months instead of HSV
+    # Use custom color palette for months
     colors = get_custom_color_palette(12)
     
     from scipy.stats import gaussian_kde
+    from matplotlib.colors import Normalize
+    
+    # Create a normalization that puts 0 at the center for delay coloring
+    norm = Normalize(vmin=-15, vmax=60)
     
     # Plot each available month in its own subplot
-    for i, month in enumerate(available_months):
+    for i, month in enumerate(available_months[:4]):  # Limit to first 4 months to fit in 2x2 grid
         ax = axes[i]
         month_mask = month_data['Month'] == month
         month_subset = month_data[month_mask]
@@ -201,15 +245,22 @@ def create_seasonal_visualization(
             month_idx = month - 1
             color = colors[month_idx]
             
-            # Plot scatter points with alpha for transparency
-            ax.scatter(
+            # Plot scatter points with delay coloring
+            scatter = ax.scatter(
                 month_subset['UMAP1'],
                 month_subset['UMAP2'],
-                c=[color],
-                alpha=0.3,
+                c=month_subset['Delay'],
+                cmap='RdYlGn_r',  # Red-Yellow-Green (reversed so red=delayed)
+                norm=norm,
+                alpha=0.5,
                 s=30,
                 edgecolor='none'
             )
+            
+            # Add colorbar if it's the last subplot or top-right subplot
+            if i == len(available_months[:4]) - 1 or i == 1:
+                cbar = fig.colorbar(scatter, ax=ax)
+                cbar.set_label('Departure Delay (minutes)', fontsize=10)
             
             # Calculate and plot centroid
             centroid_x = month_subset['UMAP1'].mean()
@@ -237,13 +288,51 @@ def create_seasonal_visualization(
                     positions = np.vstack([xx.ravel(), yy.ravel()])
                     z = kde(positions).reshape(xx.shape)
                     
-                    # Plot contours - adjusted for RGB tuples from custom palette
+                    # Plot contours with color based on month
                     contour = ax.contour(xx, yy, z, 
                                         levels=5, 
                                         colors=[(color[0], color[1], color[2], level) for level in np.linspace(0.5, 1, 5)],
                                         linewidths=2)
                 except Exception as e:
                     logging.warning(f"Could not create density contours for month {month}: {e}")
+            
+            # Calculate operational statistics
+            stats_text = ""
+            
+            # Average delay
+            avg_delay = month_metrics[month]['Delay']
+            stats_text += f"Avg Delay: {avg_delay:.1f} min\n"
+            
+            # Average duration
+            avg_duration = month_metrics[month]['Duration']
+            stats_text += f"Avg Duration: {avg_duration:.1f} min\n"
+            
+            # Average turnaround if available
+            if 'Turnaround' in month_metrics[month]:
+                avg_turnaround = month_metrics[month]['Turnaround']
+                stats_text += f"Avg Turnaround: {avg_turnaround:.1f} min\n"
+            
+            # On-time percentage
+            on_time_pct = month_metrics[month]['On-Time %']
+            stats_text += f"On-Time: {on_time_pct:.1f}%\n"
+            
+            # Early percentage
+            early_pct = month_metrics[month]['Early %']
+            stats_text += f"Early: {early_pct:.1f}%\n"
+            
+            # # Number of flights
+            # n_flights = month_metrics[month]['Count']
+            # stats_text += f"Flights: {n_flights}"
+            
+            # Add text box with stats
+            ax.text(
+                0.05, 0.95,
+                stats_text,
+                transform=ax.transAxes,
+                fontsize=10,
+                va='top',
+                bbox=dict(boxstyle='round,pad=0.3', fc='white', alpha=0.8)
+            )
             
             # Set title and limits
             ax.set_title(f"{month_names[month_idx]}", fontsize=16)
@@ -260,23 +349,17 @@ def create_seasonal_visualization(
                 ax.set_ylabel('UMAP Dimension 2', fontsize=12)
     
     # Add main title
-    fig.suptitle('Seasonal Patterns in Flight Embeddings', fontsize=20, y=0.98)
-    
-    # # Add text describing the approach
-    # fig.text(0.5, 0.01, 
-    #          'Each plot shows the distribution of flight embeddings for a single month.\n'
-    #          'Centroids (X) indicate the mean position. Contour lines show density of points.',
-    #          ha='center', fontsize=12)
+    fig.suptitle('Seasonal Patterns in Flight Embeddings with Delay Analysis', fontsize=20, y=0.98)
     
     # Improve layout
     plt.tight_layout()
     plt.subplots_adjust(top=0.92, bottom=0.07)
     
     # Save figure
-    output_path = output_dir / "seasonal_patterns_small_multiples.png"
+    output_path = output_dir / "seasonal_patterns_delay_analysis.png"
     plt.savefig(output_path, bbox_inches='tight', dpi=300)
     plt.close()
-    logging.info(f"Small multiples visualization saved to {output_path}")
+    logging.info(f"Enhanced seasonal visualization saved to {output_path}")
     
     # Create a combined visualization with density contours only (no points)
     plt.figure(figsize=(14, 10))
@@ -359,9 +442,10 @@ def create_seasonal_visualization(
     month_data.to_csv(csv_path, index=False)
     logging.info(f"Data saved to {csv_path}")
     
-    # Generate a month distribution summary
-    month_summary = month_data.groupby(['Month', 'Month_Name']).size().reset_index(name='Count')
-    month_summary['Percentage'] = 100 * month_summary['Count'] / month_summary['Count'].sum()
+    # Generate a month metrics summary table
+    metrics_df = pd.DataFrame.from_dict(month_metrics, orient='index')
+    metrics_df.index.name = 'Month'
+    metrics_df['Month_Name'] = metrics_df.index.map(lambda x: month_names[int(x)-1])
     
     # Add centroid coordinates to the summary
     centroids = month_data.groupby('Month').agg({
@@ -370,12 +454,66 @@ def create_seasonal_visualization(
     }).reset_index()
     centroids.columns = ['Month', 'Centroid_X', 'Centroid_Y']
     
-    month_summary = pd.merge(month_summary, centroids, on='Month')
+    # Merge with metrics
+    metrics_df = metrics_df.reset_index()
+    metrics_df = pd.merge(metrics_df, centroids, on='Month')
     
-    # Save month distribution summary
-    summary_path = output_dir / "month_distribution.csv"
-    month_summary.to_csv(summary_path, index=False)
-    logging.info(f"Month distribution summary saved to {summary_path}")
+    # Save month metrics summary
+    summary_path = output_dir / "month_metrics.csv"
+    metrics_df.to_csv(summary_path, index=False)
+    logging.info(f"Month metrics summary saved to {summary_path}")
+    
+    # Create a comprehensive table visualization
+    plt.figure(figsize=(14, 8))
+    plt.axis('off')
+    
+    # Prepare table data
+    table_data = []
+    header = ['Month', 'Avg Delay', 'Avg Duration', 'On-Time %', 'Early %', 'Flights']
+    
+    if 'Turnaround' in list(month_metrics.values())[0]:
+        header.insert(3, 'Avg Turnaround')
+    
+    for month in available_months:
+        month_name = month_names[month-1]
+        row = [
+            month_name,
+            f"{month_metrics[month]['Delay']:.1f}",
+            f"{month_metrics[month]['Duration']:.1f}"
+        ]
+        
+        if 'Turnaround' in month_metrics[month]:
+            row.append(f"{month_metrics[month]['Turnaround']:.1f}")
+        
+        row.extend([
+            f"{month_metrics[month]['On-Time %']:.1f}%",
+            f"{month_metrics[month]['Early %']:.1f}%",
+            f"{month_metrics[month]['Count']}"
+        ])
+        
+        table_data.append(row)
+    
+    # Create the table
+    table = plt.table(
+        cellText=table_data,
+        colLabels=header,
+        loc='center',
+        cellLoc='center'
+    )
+    
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1, 1.5)
+    
+    # Add a title
+    plt.title('Monthly Flight Statistics Comparison', fontsize=18, pad=20)
+    
+    # Save the table visualization
+    table_path = output_dir / "month_statistics_table.png"
+    plt.savefig(table_path, bbox_inches='tight', dpi=300)
+    plt.close()
+    logging.info(f"Monthly statistics table saved to {table_path}")
 
 
 def main():
@@ -397,8 +535,7 @@ def main():
     # Create and save visualization
     create_seasonal_visualization(reduced, df, args.output_dir)
     
-    logging.info("Seasonal pattern visualization complete")
-    
+    logging.info("Enhanced seasonal pattern visualization complete")
 
 
 if __name__ == "__main__":
