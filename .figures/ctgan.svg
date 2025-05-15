@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 100 1100 540">
+  <rect x="40" y="100" width="1100" height="540" fill="#fff"/>
+  <!-- Title -->
+  <text x="550" y="120" text-anchor="middle" font-family="Arial" font-size="24" font-weight="bold" fill="#333333">CTGAN Architecture for Flight Data Generation</text>
+  
+  <!-- Input and Output -->
+  <rect x="50" y="200" width="140" height="100" fill="#f9f9f9" stroke="#0066cc" stroke-width="2" rx="8" ry="8"/>
+  <text x="120" y="230" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#0066cc">Flight Input Data</text>
+  <text x="120" y="255" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">Airlines, airports,</text>
+  <text x="120" y="275" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">aircraft types,</text>
+  <text x="120" y="295" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">schedules, etc.</text>
+  
+    <rect x="975" y="200" width="140" height="100" fill="#f9f9f9" stroke="#0066cc" stroke-width="2" rx="8" ry="8"/>
+    <text x="1045" y="230" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#0066cc">Synthetic</text>
+    <text x="1045" y="250" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#0066cc">Flight Data</text>
+    <text x="1045" y="275" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">Realistic tabular</text>
+    <text x="1045" y="295" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">flight information</text>
+  
+  <!-- DATA TRANSFORMER SECTION -->
+  <rect x="220" y="150" width="200" height="200" fill="#e6f0ff" stroke="#3366cc" stroke-width="2" rx="8" ry="8"/>
+  <text x="320" y="175" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#3366cc">Data Transformer</text>
+  
+  <!-- Continuous column component -->
+  <rect x="240" y="190" width="160" height="70" fill="#ffffff" stroke="#3366cc" stroke-width="1" rx="5" ry="5"/>
+  <text x="320" y="210" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">Mode-specific</text>
+  <text x="320" y="230" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">Normalization</text>
+  <text x="320" y="250" text-anchor="middle" font-family="Arial" font-size="11">Gaussian Mixture Model</text>
+  
+  <!-- Discrete column component -->
+  <rect x="240" y="270" width="160" height="60" fill="#ffffff" stroke="#3366cc" stroke-width="1" rx="5" ry="5"/>
+  <text x="320" y="290" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">One-Hot Encoding</text>
+  <text x="320" y="310" text-anchor="middle" font-family="Arial" font-size="11">for discrete columns</text>
+  
+  <!-- CONDITIONAL MECHANISM SECTION -->
+  <rect x="220" y="370" width="200" height="100" fill="#ffe6e6" stroke="#cc3333" stroke-width="2" rx="8" ry="8"/>
+  <text x="320" y="395" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#cc3333">Conditional Mechanism</text>
+  
+  <!-- Conditional vector component -->
+  <rect x="240" y="410" width="160" height="45" fill="#ffffff" stroke="#cc3333" stroke-width="1" rx="5" ry="5"/>
+  <text x="320" y="430" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">Training-by-Sampling</text>
+  <text x="320" y="450" text-anchor="middle" font-family="Arial" font-size="11">Log-frequency sampling</text>
+  
+  <!-- GAN ARCHITECTURE SECTION -->
+  <rect x="450" y="150" width="330" height="320" fill="#e6ffe6" stroke="#339933" stroke-width="2" rx="8" ry="8"/>
+  <text x="615" y="175" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#339933">GAN Architecture</text>
+  
+  <!-- Generator component -->
+  <rect x="470" y="190" width="290" height="120" fill="#ffffff" stroke="#339933" stroke-width="1" rx="5" ry="5"/>
+  <text x="615" y="210" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">Generator</text>
+  <text x="615" y="230" text-anchor="middle" font-family="Arial" font-size="11">Random noise + conditional vector</text>
+  <text x="615" y="250" text-anchor="middle" font-family="Arial" font-size="11">Residual fully-connected layers</text>
+  <text x="615" y="270" text-anchor="middle" font-family="Arial" font-size="11">tanh for continuous outputs</text>
+  <text x="615" y="290" text-anchor="middle" font-family="Arial" font-size="11">Gumbel-softmax for categorical</text>
+  
+  <!-- Discriminator component -->
+  <rect x="470" y="330" width="290" height="120" fill="#ffffff" stroke="#339933" stroke-width="1" rx="5" ry="5"/>
+  <text x="615" y="350" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">Discriminator</text>
+  <text x="615" y="370" text-anchor="middle" font-family="Arial" font-size="11">PacGAN framework</text>
+  <text x="615" y="390" text-anchor="middle" font-family="Arial" font-size="11">Fully-connected network</text>
+  <text x="615" y="410" text-anchor="middle" font-family="Arial" font-size="11">Leaky ReLU + Dropout</text>
+  <text x="615" y="430" text-anchor="middle" font-family="Arial" font-size="11">WGAN-GP loss function</text>
+  
+  <!-- INVERSE TRANSFORMER SECTION -->
+<rect x="805" y="200" width="140" height="100" fill="#f0e6ff" stroke="#6633cc" stroke-width="2" rx="8" ry="8"/>
+    <text x="875" y="225" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#6633cc">Inverse Data</text>
+    <text x="875" y="245" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#6633cc">Transformer</text>
+    <text x="875" y="270" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">Reverses GMM</text>
+    <text x="875" y="290" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">and one-hot</text>
+    
+  <!-- TRAINING/SAMPLING FLOW SECTION -->
+  <rect x="250" y="500" width="500" height="130" fill="#f9f9f9" stroke="#666666" stroke-width="2" rx="8" ry="8"/>
+  <text x="500" y="525" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#333333">Training and Sampling Process</text>
+  
+  <!-- Training process -->
+  <rect x="270" y="540" width="220" height="75" fill="#f0f8ff" stroke="#3366cc" stroke-width="1" rx="5" ry="5"/>
+  <text x="380" y="560" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#3366cc">Training Flow</text>
+  <text x="275" y="580" font-family="Arial" font-size="11">1. Transform flight data</text>
+  <text x="275" y="600" font-family="Arial" font-size="11">2. Train adversarially with conditioning</text>
+  
+  <!-- Sampling process -->
+  <rect x="510" y="540" width="220" height="75" fill="#f0f8ff" stroke="#3366cc" stroke-width="1" rx="5" ry="5"/>
+  <text x="620" y="560" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#3366cc">Sampling Flow</text>
+  <text x="515" y="580" font-family="Arial" font-size="11">1. Generate with conditional vectors</text>
+  <text x="515" y="600" font-family="Arial" font-size="11">2. Inverse transform to flight format</text>
+  
+  <!-- Connection Arrows -->
+  <!-- Input to data transformer -->
+  <path d="M190,250 L220,250" stroke="#555555" stroke-width="2" fill="none"/>
+  <polygon points="215,245 225,250 215,255" fill="#555555"/>
+  
+  <!-- Data transformer to Conditional -->
+  <path d="M320,350 L320,370" stroke="#555555" stroke-width="2" fill="none"/>
+  <polygon points="315,365 320,375 325,365" fill="#555555"/>
+  
+  <!-- Conditional to Generator -->
+    <path d="M420,420 L435,420 L435,245 L460,245" stroke="#cc3333" stroke-width="2" fill="none"/>
+    <polygon points="460,240 460,250 470,245" fill="#cc3333"/>
+  
+  <!-- Generator to Discriminator -->
+  <path d="M615,310 L615,330" stroke="#339933" stroke-width="2" fill="none"/>
+  <polygon points="610,325 615,335 620,325" fill="#339933"/>
+  
+  <!-- Generator to Inverse Transformer -->
+  <path d="M780,250 L805,250" stroke="#555555" stroke-width="2" fill="none"/>
+  <polygon points="800,245 810,250 800,255" fill="#555555"/>
+  
+  <!-- Inverse transformer to output -->
+  <!-- Inverse transformer to output -->
+  <path d="M945,250 L975,250" stroke="#555555" stroke-width="2" fill="none"/>
+  <polygon points="970,245 980,250 970,255" fill="#555555"/>
+  
+
+  <!-- Discriminator feedback to Generator -->
+  <path d="M470,380 C440,380 440,250 470,250" stroke="#339933" stroke-width="2" stroke-dasharray="5,3" fill="none"/>
+  <polygon points="470,246 470,254 478,250" fill="#339933"/>
+  
+  <!-- Flow connections -->
+  <path d="M320,470 L320,500" stroke="#666666" stroke-width="2" stroke-dasharray="3,2" fill="none"/>
+  <path d="M615,470 L615,500" stroke="#666666" stroke-width="2" stroke-dasharray="3,2" fill="none"/>
+  
+</svg>

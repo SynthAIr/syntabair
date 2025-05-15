@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 80 1150 450">
+  <rect x="30" y="80" width="1150" height="450" fill="#fff"/>
+  <!-- Title -->
+  <text x="600" y="120" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="#333333">REaLTabFormer Architecture for Tabular Flight Data</text>
+  
+  <!-- Input and Output -->
+  <rect x="50" y="200" width="160" height="120" fill="#f9f9f9" stroke="#0066cc" stroke-width="2" rx="10" ry="10"/>
+  <text x="130" y="230" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#0066cc">Flight Input Data</text>
+  <text x="130" y="260" text-anchor="middle" font-family="Arial" font-size="14" fill="#555">Airlines, airports,</text>
+  <text x="130" y="285" text-anchor="middle" font-family="Arial" font-size="14" fill="#555">aircraft types,</text>
+  <text x="130" y="310" text-anchor="middle" font-family="Arial" font-size="14" fill="#555">schedules, delays</text>
+  
+  <rect x="990" y="200" width="160" height="120" fill="#f9f9f9" stroke="#0066cc" stroke-width="2" rx="10" ry="10"/>
+  <text x="1070" y="230" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#0066cc">Synthetic</text>
+  <text x="1070" y="255" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#0066cc">Flight Data</text>
+  <text x="1070" y="285" text-anchor="middle" font-family="Arial" font-size="14" fill="#555">Realistic tabular</text>
+  <text x="1070" y="310" text-anchor="middle" font-family="Arial" font-size="14" fill="#555">flight information</text>
+  
+  <!-- DATA TRANSFORMER SECTION -->
+  <rect x="240" y="150" width="220" height="220" fill="#e6f0ff" stroke="#3366cc" stroke-width="2" rx="10" ry="10"/>
+  <text x="350" y="180" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#3366cc">Data Transformer</text>
+  
+  <!-- Continuous column component -->
+  <rect x="260" y="195" width="180" height="80" fill="#ffffff" stroke="#3366cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="350" y="220" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Mode-specific</text>
+  <text x="350" y="243" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Normalization</text>
+  <text x="350" y="265" text-anchor="middle" font-family="Arial" font-size="13">For delays, durations, etc.</text>
+  
+  <!-- Discrete column component -->
+  <rect x="260" y="285" width="180" height="70" fill="#ffffff" stroke="#3366cc" stroke-width="1" rx="6" ry="6"/>
+  <text x="350" y="310" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Column Tokenization</text>
+  <text x="350" y="333" text-anchor="middle" font-family="Arial" font-size="13">Airlines, airports, aircraft</text>
+  
+  <!-- GPT-2 MODEL SECTION -->
+  <rect x="490" y="150" width="350" height="220" fill="#ffe6e6" stroke="#cc3333" stroke-width="2" rx="10" ry="10"/>
+  <text x="665" y="180" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#cc3333">GPT-2 Autoregressive Model</text>
+  
+  <!-- Model Architecture -->
+  <rect x="510" y="195" width="310" height="80" fill="#ffffff" stroke="#cc3333" stroke-width="1" rx="6" ry="6"/>
+  <text x="665" y="220" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Model Architecture</text>
+  <text x="665" y="243" text-anchor="middle" font-family="Arial" font-size="13">6 transformer decoder layers</text>
+  <text x="665" y="265" text-anchor="middle" font-family="Arial" font-size="13">768-dimensional embeddings</text>
+  
+  <!-- Generation Strategy -->
+  <rect x="510" y="285" width="310" height="70" fill="#ffffff" stroke="#cc3333" stroke-width="1" rx="6" ry="6"/>
+  <!-- <text x="665" y="310" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Column-wise Generation</text> -->
+  <text x="665" y="310" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Row-wise Autoregressiv Generation</text>
+  <text x="665" y="333" text-anchor="middle" font-family="Arial" font-size="13">Token-by-token autoregressive</text>
+  
+  <!-- REGULARIZATION SECTION -->
+  <rect x="240" y="400" width="220" height="120" fill="#fff2e6" stroke="#ff9933" stroke-width="2" rx="10" ry="10"/>
+  <text x="350" y="430" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#ff9933">Regularization</text>
+  
+  <!-- Target masking component -->
+  <rect x="260" y="450" width="180" height="55" fill="#ffffff" stroke="#ff9933" stroke-width="1" rx="6" ry="6"/>
+  <text x="350" y="475" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold">Target Masking</text>
+  <text x="350" y="495" text-anchor="middle" font-family="Arial" font-size="13">Prevents data copying</text>
+  
+    
+  <!-- INVERSE TRANSFORMER SECTION -->
+  <rect x="868" y="150" width="95" height="220" fill="#f0e6ff" stroke="#6633cc" stroke-width="2" rx="10" ry="10"/>
+  <text x="915" y="190" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#6633cc">Invers Data</text>
+  <text x="915" y="215" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#6633cc">Transformer</text>
+  <text x="915" y="270" text-anchor="middle" font-family="Arial" font-size="13" fill="#555">Converts</text>
+  <text x="915" y="293" text-anchor="middle" font-family="Arial" font-size="13" fill="#555">tokens to</text>
+  <text x="915" y="316" text-anchor="middle" font-family="Arial" font-size="13" fill="#555">flight data</text>
+  
+  <!-- OVERFITTING DETECTION SECTION -->
+  <rect x="870" y="400" width="220" height="120" fill="#ffe6cc" stroke="#ff6633" stroke-width="2" rx="10" ry="10"/>
+  <text x="980" y="430" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#ff6633">Overfitting Detection</text>
+  
+  <rect x="890" y="450" width="180" height="55" fill="#ffffff" stroke="#ff6633" stroke-width="1" rx="6" ry="6"/>
+  <text x="980" y="470" text-anchor="middle" font-family="Arial" font-size="13" font-weight="bold">Qδ statistic and DCR</text>
+  <text x="980" y="490" text-anchor="middle" font-family="Arial" font-size="12">Statistical bootstrapping</text>
+
+  
+  <!-- Connection Arrows -->
+  <!-- Input to data transformer -->
+  <path d="M210,260 L240,260" stroke="#555555" stroke-width="3" fill="none"/>
+  <polygon points="235,255 245,260 235,265" fill="#555555"/>
+  
+  <!-- Data transformer to GPT-2 model -->
+  <path d="M460,260 L490,260" stroke="#555555" stroke-width="3" fill="none"/>
+  <polygon points="485,255 495,260 485,265" fill="#555555"/>
+  
+  <!-- GPT-2 model to inverse transformer -->
+  <path d="M840,260 L870,260" stroke="#555555" stroke-width="3" fill="none"/>
+  <polygon points="865,255 875,260 865,265" fill="#555555"/>
+  
+  <!-- Target masking to GPT-2 -->
+  <path d="M460,460 C475,460 475,320 490,320" stroke="#ff9933" stroke-width="2" stroke-dasharray="5,3" fill="none"/>
+  <polygon points="495,325 485,320 495,315" fill="#ff9933"/>
+  
+  <!-- Inverse transformer to output -->
+  <path d="M962,260 L990,260" stroke="#555555" stroke-width="3" fill="none"/>
+  <polygon points="985,255 995,260 985,265" fill="#555555"/>
+  
+  <!-- Overfitting detection to GPT-2 -->
+  <path d="M870,460 C850,460 850,320 840,320" stroke="#ff6633" stroke-width="2" stroke-dasharray="5,3" fill="none"/>
+  <!-- <polygon points="845,325 835,320 845,315" fill="#ff6633"/> -->
+  <polygon points="835,325 845,320 835,315" fill="#ff6633"/>
+
+</svg>
