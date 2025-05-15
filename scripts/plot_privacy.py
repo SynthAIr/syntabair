@@ -574,13 +574,23 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
             )
             
             # Add dataset name as text label
-            plt.annotate(
-                row['Dataset'],
-                (row['BaselineProtectionScore'], row['OverfittingProtectionScore']),
-                xytext=(5, 5),
-                textcoords='offset points',
-                fontsize=10
-            )
+            if row['Dataset'] == "REaLTabFormer":
+                plt.annotate(
+                    row['Dataset'],
+                    (row['BaselineProtectionScore'], row['OverfittingProtectionScore']),
+                    xytext=(5, 5), 
+                    textcoords='offset points',
+                    fontsize=10,
+                    ha='right'
+                )
+            else:
+                plt.annotate(
+                    row['Dataset'],
+                    (row['BaselineProtectionScore'], row['OverfittingProtectionScore']),
+                    xytext=(5, 5),
+                    textcoords='offset points',
+                    fontsize=10
+                )
         
         # Add reference lines at 0.5
         plt.axhline(y=0.5, color='gray', linestyle='--', alpha=0.5)
