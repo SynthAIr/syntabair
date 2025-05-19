@@ -104,6 +104,5 @@ The heatmap offers a compact reference of all scores, clearly showing:
 - The significant variation in baseline protection (ranging from light to medium blue)
 - GaussianCopula's leadership in overall balanced privacy
 ---
-## Conclusions & Recommendations
 
 
