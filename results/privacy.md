@@ -9,7 +9,7 @@ Privacy in synthetic data requires balancing two key aspects: ensuring synthetic
 
 Privacy in synthetic data requires balancing two key aspects: ensuring synthetic records don't reveal sensitive information from real data while still maintaining utility. Our evaluation uses two Distance‑to‑Closest‑Record (DCR) metrics that measure different privacy dimensions.
 
-![DCR Toy Example](dcr.svg)
+![DCR Toy Example](../.figures/dcr.svg)
 
 ### Distance-to-Closest-Record (DCR) Explained
 DCR measures how close each synthetic record is to its nearest neighbor in real data. Larger distances indicate better privacy protection, as synthetic records are less likely to reveal information about specific real records.
@@ -40,12 +40,6 @@ All DCR calculations normalize each feature's contribution by its range, prevent
 
 ![Baseline Protection Score](privacy/plots/baseline_protection_score.png)
 
-
-Dataset	Score	SyntheticMedianDCR	RandomMedianDCR
-GaussianCopula	0.5441773762486156	0.22744942924835934	0.41931930742134016
-CTGAN	0.3365407550683055	0.12577928061595758	0.37447711223101976
-TabSyn	0.29557495227809016	0.10810994027492703	0.37006640708512695
-REaLTabFormer	0.22539463514983574	0.09378027772591659	0.4171184287852725
 
 
 ### Key Insights
@@ -92,21 +86,10 @@ The side-by-side comparison reveals:
 ---
 ![Holdout Percentage](privacy/plots/overfitting_protection_holdout_percentage.png)
 
-This visualization emphasizes proximity to the ideal 50% threshold (red dashed line):
-- CTGAN and GaussianCopula exceed 50%, placing slightly more synthetic records closer to the holdout set
-- TVAE and Realtabformer fall just below 50%, with marginally more records closer to training data
-- All models remain within ±6% of the ideal balance, which is excellent for privacy protection
----
 ## Combined Privacy Evaluation
 
 ![Average Privacy Score](privacy/plots/average_privacy_score.png)
 
-| Model             | Baseline Protection | Overfitting Protection | Avg. Privacy Score |
-|-------------------|-----------------:|----------------------:|------------------:|
-| GaussianCopula    | 0.5353           | 0.9633                | 0.7493            |
-| CTGAN             | 0.3676           | 1.0000                | 0.6838            |
-| TVAE              | 0.3780           | 0.9326                | 0.6553            |
-| Realtabformer     | 0.2874           | 0.9718                | 0.6296            |
 
 ### Key Insights
 - **GaussianCopula** delivers the best overall privacy (0.7493) by balancing both privacy dimensions effectively
@@ -134,24 +117,4 @@ The heatmap offers a compact reference of all scores, clearly showing:
 ---
 ## Conclusions & Recommendations
 
-### Key Findings
-1. **GaussianCopula** provides the best balanced privacy protection, with moderate baseline protection (0.5353) and strong overfitting protection (0.9633).
-
-2. **CTGAN** achieves perfect overfitting protection (1.0000) but offers weaker baseline protection (0.3676), indicating synthetic records remain relatively close to real ones.
-
-3. **TVAE** and **Realtabformer** both demonstrate excellent overfitting protection (>0.93) but struggle with baseline protection (<0.38), with Realtabformer scoring lowest overall.
-
-4. All models show room for improvement in baseline protection (no score >0.6), suggesting current synthetic generators still produce records that are measurably closer to real data than random noise would be.
-
-### Recommendations for Practitioners
-
-- **For balanced privacy protection**: Choose **GaussianCopula** when both types of privacy are important.
-
-- **For preventing record memorization**: Select **CTGAN** when your primary concern is ensuring the model doesn't expose specific training examples.
-
-- **For maximum utility with acceptable privacy**: Consider **TVAE** or **Realtabformer**, which may offer better utility despite slightly weaker privacy protection.
-
-- **For highly sensitive applications**: Consider implementing additional privacy-enhancing techniques (noise addition, aggregation, etc.) on top of these generators, as no model achieves near-perfect baseline protection.
-
-- **For future research**: Focus on improving baseline protection while maintaining the already strong overfitting protection, perhaps through calibrated noise addition or differential privacy mechanisms.
 
