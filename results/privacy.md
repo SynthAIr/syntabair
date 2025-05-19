@@ -65,12 +65,6 @@ The ratio chart (synthetic DCR / random DCR) provides a normalized view:
 
 ![Overfitting Protection Score](privacy/plots/overfitting_protection_score.png)
 
-| Model             | Score   | % Closer to Training | % Closer to Holdout |
-|-------------------|--------:|---------------------:|--------------------:|
-| CTGAN             | 1.0000  | 44.44%               | 55.56%              |
-| Realtabformer     | 0.9718  | 50.82%               | 49.18%              |
-| GaussianCopula    | 0.9633  | 44.98%               | 55.02%              |
-| TVAE              | 0.9326  | 50.59%               | 49.41%              |
 
 ### Key Insights
 - **CTGAN** achieves perfect overfitting protection (1.0000), with balanced proximity to training and holdout data, suggesting it doesn't memorize specific records.
@@ -80,7 +74,6 @@ The ratio chart (synthetic DCR / random DCR) provides a normalized view:
 ![Overfitting Comparison](privacy/plots/overfitting_protection_comparison.png)
 
 The side-by-side comparison reveals:
-- CTGAN has the most balanced distribution, with a slight preference (55.56%) toward holdout data
 - All models hover near the ideal 50/50 split, indicating limited memorization of training data
 - The pattern is consistent across all generators, suggesting that modern synthetic data techniques effectively avoid extreme overfitting
 ---
@@ -91,10 +84,6 @@ The side-by-side comparison reveals:
 ![Average Privacy Score](privacy/plots/average_privacy_score.png)
 
 
-### Key Insights
-- **GaussianCopula** delivers the best overall privacy (0.7493) by balancing both privacy dimensions effectively
-- **CTGAN** ranks second (0.6838) despite weaker baseline protection, thanks to its perfect overfitting protection
-- All models show stronger overfitting protection than baseline protection, suggesting current synthetic data techniques prioritize avoiding memorization over general privacy
 
 ---
 ![Privacy Metrics Comparison](privacy/plots/privacy_metrics_comparison.png)
