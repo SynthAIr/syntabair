@@ -20,7 +20,7 @@ DCR measures how close each synthetic record is to its nearest neighbor in real 
 1. **Baseline Protection** (`DCRBaselineProtection`):  
    Compares synthetic data's distance from real data against random data's distance.
    
-   $$\text{Score} = \min\left(\frac{\text{median DCR}_{\text{synthetic}}}{\text{median DCR}_{\text{random}}},\, 1.0\right)$$
+   <!-- $$\text{Score} = \min\left(\frac{\text{median DCR}_{\text{synthetic}}}{\text{median DCR}_{\text{random}}},\, 1.0\right)$$ -->
    
    * **Higher scores** (closer to 1.0) mean synthetic data is nearly as distant from real data as random noise would be, indicating stronger privacy.
    * **Lower scores** suggest synthetic records remain suspiciously close to real records, potentially leaking private information.
@@ -28,7 +28,7 @@ DCR measures how close each synthetic record is to its nearest neighbor in real 
 2. **Overfitting Protection** (`DCROverfittingProtection`):  
    Measures whether synthetic data is disproportionately similar to training data compared to unseen holdout data.
    
-   $$\text{Score} = \min\left(2 \times (1 - p_{\text{closer\_to\_training}}),\, 1.0\right)$$
+   <!-- $$\text{Score} = \min\left(2 \times (1 - p_{\text{closer\_to\_training}}),\, 1.0\right)$$ -->
    
    * **Higher scores** (closer to 1.0) indicate synthetic data doesn't memorize training data.
    * **Balanced proximity** (around 50% closer to training, 50% closer to holdout) is ideal.
