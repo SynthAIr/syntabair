@@ -354,7 +354,7 @@ python scripts/plot_utility.py --results_dir results/utility --output_dir result
 
 ## Attributions and Acknowledgments
 
-This repository is part of the SynthAIr project that has received funding from the SESAR Joint Undertaking under grant agreement No 101114684 under European Union's Horizon 2020 research and innovation programme.
+This repository is part of the SynthAIr project that has received funding from the SESAR Joint Undertaking under grant agreement No 101114847 under European Union's Horizon 2020 research and innovation programme.
 
 The implementation builds upon several foundational research papers and implementations:
 
