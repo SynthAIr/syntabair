@@ -259,6 +259,8 @@ Measures how well synthetic flight data preserves the statistical properties of 
 - Joint distributions of related variables
 - Detection resistance against classifiers
 
+For detailed fidelity evaluation results on our EU flight data, including comprehensive statistical similarity metrics and visualizations, see our [complete fidelity analysis](results/fidelity.md).
+
 ### 2. Privacy Evaluation
 
 ```bash
@@ -277,6 +279,8 @@ Evaluates privacy protection by measuring:
 - Distance to closest record (DCR) between synthetic and real flight data
 - Resistance to memorization of training data
 - Protection against record reconstruction attacks
+
+For detailed privacy evaluation results on our synthetic flight data, including DCR baseline and overfitting protection analyses, see our [comprehensive privacy assessment](results/privacy.md).
 
 ### 3. Utility Evaluation
 
@@ -298,6 +302,8 @@ Assesses the usefulness of synthetic flight data for ATM prediction tasks:
   - Departure delay prediction
   - Arrival delay prediction
   - Turnaround time prediction
+
+For detailed utility evaluation results on our EU flight data, including TSTR performance metrics and feature importance analyses across all prediction tasks, see our [complete utility analysis](results/utility.md).
 
 ### Visualization
 
