@@ -13,6 +13,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Default figure format (will be overridden by CLI argument)
+FIG_FORMAT = "png"
+
 
 def setup_argparse():
     """Set up command line argument parser"""
@@ -63,6 +66,14 @@ def setup_argparse():
         default=15,
         help="Number of top features to show in feature importance plots"
     )
+    parser.add_argument(
+        "--format",
+        dest="fig_format",
+        type=str,
+        choices=["png", "pdf", "jpg"],
+        default="pdf",
+        help="Format of the saved figures"
+    )
     
     return parser
 
@@ -78,52 +89,31 @@ def get_custom_color_palette(num_colors, exclude_real=False):
         list: List of colors in RGB tuples
     """
     # Define a visually appealing color palette
-    # These are more distinctive and appealing colors
     custom_colors = [
-        # Teal
-        (0.00, 0.63, 0.64),
-        # Crimson
-        (0.75, 0.12, 0.24),
-        # Dark orange
-        (0.85, 0.37, 0.01),
-        # Forest green
-        (0.13, 0.55, 0.13),
-        # Ochre
-        (0.80, 0.52, 0.25),
-        # Burgundy
-        (0.55, 0.00, 0.26),
-        # Navy
-        (0.00, 0.21, 0.41),
-        # Dark red
-        (0.64, 0.08, 0.18),
-        # Dark green
-        (0.00, 0.39, 0.25),
-        # Brown
-        (0.55, 0.27, 0.07),
-        # Dark slate
-        (0.28, 0.24, 0.55)
+        (0.00, 0.63, 0.64),  # Teal
+        (0.75, 0.12, 0.24),  # Crimson
+        (0.85, 0.37, 0.01),  # Dark orange
+        (0.13, 0.55, 0.13),  # Forest green
+        (0.80, 0.52, 0.25),  # Ochre
+        (0.55, 0.00, 0.26),  # Burgundy
+        (0.00, 0.21, 0.41),  # Navy
+        (0.64, 0.08, 0.18),  # Dark red
+        (0.00, 0.39, 0.25),  # Dark green
+        (0.55, 0.27, 0.07),  # Brown
+        (0.28, 0.24, 0.55)   # Dark slate
     ]
     
     if exclude_real:
-        # Define a distinct color for 'Real' dataset 
-        # Deep blue
-        real_color = (0.00, 0.27, 0.55)
-        
-        # Need one less color from the palette
+        real_color = (0.00, 0.27, 0.55)  # Deep blue
         required_colors = num_colors - 1
-        
-        # If we need more colors than in our custom palette, extend it with a seaborn color palette
         if required_colors > len(custom_colors):
             additional_colors = sns.color_palette("tab20", required_colors)
             result_colors = custom_colors + additional_colors
             result_colors = result_colors[:required_colors]
         else:
             result_colors = custom_colors[:required_colors]
-            
-        # Return colors with the real color first
         return [real_color] + result_colors
     else:
-        # If we need more colors than in our custom palette, extend it with a seaborn color palette
         if num_colors > len(custom_colors):
             additional_colors = sns.color_palette("tab20", num_colors)
             result_colors = custom_colors + additional_colors
@@ -133,21 +123,13 @@ def get_custom_color_palette(num_colors, exclude_real=False):
 
 
 def create_feature_label_mapping():
-    """
-    Create a mapping between technical column names and human-readable labels
-    
-    Returns:
-        dict: Mapping from column names to readable labels
-    """
+    """Mapping between technical column names and human-readable labels"""
     return {
-        # Categorical features
         'IATA_CARRIER_CODE': 'Carrier',
         'DEPARTURE_IATA_AIRPORT_CODE': 'Departure Airport',
         'ARRIVAL_IATA_AIRPORT_CODE': 'Arrival Airport',
         'AIRCRAFT_TYPE_IATA': 'Aircraft Type',
         'AIRPORT_PAIR': 'Airport Pair',
-        
-        # Numerical features
         'SCHEDULED_MONTH': 'Scheduled Month',
         'SCHEDULED_DAY': 'Scheduled Day',
         'SCHEDULED_HOUR': 'Scheduled Hour',
@@ -158,8 +140,6 @@ def create_feature_label_mapping():
         'DAY_OF_WEEK': 'Day of Week',
         'ARRIVAL_HOUR': 'Arrival Hour',
         'ARRIVAL_DAY': 'Arrival Day',
-        
-        # Target variables
         'DEPARTURE_DELAY_MIN': 'Departure Delay',
         'ARRIVAL_DELAY_MIN': 'Arrival Delay',
         'TURNAROUND_MIN': 'Turnaround Time'
@@ -175,221 +155,150 @@ def get_readable_title(target, mode):
 
 
 def plot_performance_metrics(performance_df, target, mode, output_dir):
-    """
-    Plot performance metrics for the given target and prediction mode
-    
-    Args:
-        performance_df (pd.DataFrame): DataFrame containing performance results
-        target (str): Target variable
-        mode (str): Prediction mode
-        output_dir (str): Directory to save plots
-    """
-    # Filter data for the target and mode
-    filtered_df = performance_df[(performance_df['Target'] == target) & 
-                                 (performance_df['Mode'] == mode)]
-    
+    """Plot performance metrics for the given target and prediction mode"""
+    filtered_df = performance_df[
+        (performance_df['Target'] == target) & 
+        (performance_df['Mode'] == mode)
+    ]
     if filtered_df.empty:
         print(f"No performance data available for {target} with {mode} mode")
         return
     
-    # Get readable title
     title_base = get_readable_title(target, mode)
-    
-    # Create a directory for the target and mode
     target_mode_dir = os.path.join(output_dir, f"{target.lower()}_{mode}")
     os.makedirs(target_mode_dir, exist_ok=True)
     
-    # Plot each metric
-    metrics = [('RMSE', 'Root Mean Squared Error (lower is better)'),
-               ('MAE', 'Mean Absolute Error (lower is better)'),
-               ('R2', 'R² Score (higher is better)')]
+    metrics = [
+        ('RMSE', 'Root Mean Squared Error (lower is better)'),
+        ('MAE', 'Mean Absolute Error (lower is better)'),
+        ('R2', 'R² Score (higher is better)')
+    ]
     
     for metric, metric_title in metrics:
         plt.figure(figsize=(14, 8))
-        
-        # Prepare data for grouped bar chart
         models = filtered_df['Model'].unique()
         datasets = filtered_df['Dataset'].unique()
-        
         x = np.arange(len(models))
         width = 0.8 / len(datasets)
-        
-        # Get custom colors
         has_real = 'Real' in datasets
         colors = get_custom_color_palette(len(datasets), exclude_real=has_real)
         
-        # Plot bars for each dataset
         for i, dataset in enumerate(datasets):
             dataset_data = filtered_df[filtered_df['Dataset'] == dataset]
             values = []
-            
             for model in models:
                 model_data = dataset_data[dataset_data['Model'] == model]
-                if not model_data.empty:
-                    values.append(model_data[metric].values[0])
-                else:
-                    values.append(0)
-            
-            # Draw the bar with custom color
-            color_index = 0 if dataset == 'Real' and has_real else i
+                values.append(model_data[metric].values[0] if not model_data.empty else 0)
+            color_index = 0 if (dataset == 'Real' and has_real) else i
             plt.bar(x + i*width, values, width, label=dataset, color=colors[color_index])
         
-        # Labels and title
         plt.xlabel('Model', fontsize=12)
         plt.ylabel(metric_title, fontsize=12)
         plt.title(f'{title_base} - {metric_title}', fontsize=14)
-        
         plt.xticks(x + width*(len(datasets)-1)/2, models)
         plt.grid(axis='y', alpha=0.3)
         plt.legend(title='Dataset', title_fontsize=12, fontsize=10, loc='best')
         plt.tight_layout()
         
-        # Add value annotations on bars
         for i, dataset in enumerate(datasets):
             dataset_data = filtered_df[filtered_df['Dataset'] == dataset]
-            
             for j, model in enumerate(models):
                 model_data = dataset_data[dataset_data['Model'] == model]
                 if not model_data.empty:
                     value = model_data[metric].values[0]
-                    if metric == 'R2':
-                        # Format R2 with 2 decimal places
-                        plt.text(x[j] + i*width, value + 0.01 * max(values), 
-                                f'{value:.2f}', ha='center', va='bottom',
-                                fontsize=9)
-                    else:
-                        # Format RMSE and MAE with 1 decimal place
-                        plt.text(x[j] + i*width, value + 0.01 * max(values), 
-                                f'{value:.1f}', ha='center', va='bottom',
-                                fontsize=9)
+                    fmt = f'{value:.2f}' if metric == 'R2' else f'{value:.1f}'
+                    plt.text(
+                        x[j] + i*width,
+                        value + 0.01 * max(values),
+                        fmt,
+                        ha='center',
+                        va='bottom',
+                        fontsize=9
+                    )
         
-        # Save the plot
-        plt.savefig(os.path.join(target_mode_dir, f"{target.lower()}_{mode}_{metric.lower()}.png"), dpi=300, bbox_inches='tight')
+        # Save the plot in the requested format
+        plt.savefig(
+            os.path.join(
+                target_mode_dir,
+                f"{target.lower()}_{mode}_{metric.lower()}.{FIG_FORMAT}"
+            ),
+            format=FIG_FORMAT,
+            dpi=300,
+            bbox_inches='tight'
+        )
         plt.close()
-    
+
 
 def plot_utility_scores(utility_df, target, mode, output_dir):
-    """
-    Plot utility scores for the given target and prediction mode
-    
-    Args:
-        utility_df (pd.DataFrame): DataFrame containing utility scores
-        target (str): Target variable
-        mode (str): Prediction mode
-        output_dir (str): Directory to save plots
-    """
-    # Filter data for the target and mode
-    filtered_df = utility_df[(utility_df['Target'] == target) & 
-                             (utility_df['Mode'] == mode)]
-    
+    """Plot utility scores for the given target and prediction mode"""
+    filtered_df = utility_df[
+        (utility_df['Target'] == target) & 
+        (utility_df['Mode'] == mode)
+    ]
     if filtered_df.empty:
         print(f"No utility data available for {target} with {mode} mode")
         return
     
-    # Get readable title
     title_base = get_readable_title(target, mode)
-    
-    # Create a directory for the target and mode
     target_mode_dir = os.path.join(output_dir, f"{target.lower()}_{mode}")
     os.makedirs(target_mode_dir, exist_ok=True)
     
-    # Get datasets and models in their original order - this ensures consistency
     datasets = filtered_df['Dataset'].unique()
     models = filtered_df['Model'].unique()
-    
-    # Use custom color palette
     colors = get_custom_color_palette(len(datasets))
-    dataset_colors = dict(zip(datasets, colors))
     
-    # Create enhanced heatmap of overall utility scores
+    # Heatmap of overall utility scores
     plt.figure(figsize=(12, 9))
-    
-    # Pivot the dataframe for the heatmap
     heatmap_data = filtered_df.pivot(index='Model', columns='Dataset', values='Overall Utility')
-    
-    # Reorder the columns to match the original dataset order
     heatmap_data = heatmap_data[datasets]
-    
-    # Alternative approach - extract values to a numpy array with correct order
-    # Initialize a numpy array with zeros
-    heatmap_values = np.zeros((len(models), len(datasets)))
-    
-    # Fill the numpy array with values from the pivot table
-    for i, model in enumerate(models):
-        if model in heatmap_data.index:
-            for j, dataset in enumerate(datasets):
-                if dataset in heatmap_data.columns and not pd.isna(heatmap_data.loc[model, dataset]):
-                    heatmap_values[i, j] = heatmap_data.loc[model, dataset]
-    
-    # Create a new DataFrame from the numpy array with explicit types
-    ordered_heatmap = pd.DataFrame(
-        data=heatmap_values,
-        index=models,
-        columns=datasets
-    )
-    
-    # Use a custom color map (blue to green)
+    heatmap_values = heatmap_data.values
+    ordered_heatmap = pd.DataFrame(heatmap_values, index=models, columns=datasets)
     cmap = plt.cm.YlGnBu
-    
-    # Plot enhanced heatmap with consistently ordered data
     ax = sns.heatmap(
-        ordered_heatmap, 
-        annot=True, 
+        ordered_heatmap,
+        annot=True,
         cmap=cmap,
-        vmin=0, 
-        vmax=1, 
+        vmin=0,
+        vmax=1,
         fmt='.2f',
         cbar_kws={'label': 'Utility Score (higher is better)'},
         linewidths=0.5,
         linecolor='white',
         annot_kws={"size": 12}
     )
-    
-    # Improve heatmap appearance
     plt.title(f'{title_base} - Synthetic Data Utility Scores', fontsize=14, pad=20)
     ax.set_xlabel('Synthetic Dataset', fontsize=14, labelpad=10)
     ax.set_ylabel('Model', fontsize=14, labelpad=10)
-    
-    # Improve tick label size
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
-    
-    # Add a border around the heatmap
     for _, spine in ax.spines.items():
         spine.set_visible(True)
         spine.set_linewidth(1.0)
-    
     plt.tight_layout()
-    
-    # Save the enhanced heatmap
-    plt.savefig(os.path.join(target_mode_dir, f"{target.lower()}_{mode}_utility_heatmap.png"), 
-                dpi=300, bbox_inches='tight')
+    plt.savefig(
+        os.path.join(
+            target_mode_dir,
+            f"{target.lower()}_{mode}_utility_heatmap.{FIG_FORMAT}"
+        ),
+        format=FIG_FORMAT,
+        dpi=300,
+        bbox_inches='tight'
+    )
     plt.close()
     
-    # Rest of the function remains the same...
-    # Bar chart of average utility by dataset with custom colors
+    # Bar chart of average utility
     plt.figure(figsize=(10, 7))
-    
-    # Get datasets in the original order
-    ordered_datasets = datasets  # Use the same datasets variable defined earlier
-    
-    # Calculate average utility for each dataset while preserving order
-    avg_utility = []
-    for dataset in ordered_datasets:
-        avg = filtered_df[filtered_df['Dataset'] == dataset]['Overall Utility'].mean()
-        avg_utility.append({'Dataset': dataset, 'Overall Utility': avg})
-    
-    avg_utility_df = pd.DataFrame(avg_utility)
-    
-    # Plot with custom colors
+    avg_utility = [
+        {'Dataset': ds, 'Overall Utility': filtered_df[filtered_df['Dataset'] == ds]['Overall Utility'].mean()}
+        for ds in datasets
+    ]
+    avg_df = pd.DataFrame(avg_utility)
     bars = plt.bar(
-        avg_utility_df['Dataset'],
-        avg_utility_df['Overall Utility'],
-        color=[colors[i] for i in range(len(ordered_datasets))],
-        width=0.6
+        avg_df['Dataset'],
+        avg_df['Overall Utility'],
+        color=[colors[i] for i in range(len(datasets))],
+        width=0.4
     )
-    
-    # Enhance bar chart appearance
     plt.title(f'{title_base} - Average Synthetic Data Utility', fontsize=16)
     plt.xlabel('Synthetic Dataset', fontsize=14)
     plt.ylabel('Average Utility Score', fontsize=14)
@@ -397,404 +306,272 @@ def plot_utility_scores(utility_df, target, mode, output_dir):
     plt.grid(axis='y', alpha=0.3)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
-    
-    # Add value labels on top of each bar
     for bar in bars:
         height = bar.get_height()
         plt.text(
             bar.get_x() + bar.get_width()/2.,
             height + 0.02,
             f'{height:.2f}',
-            ha='center', 
+            ha='center',
             fontsize=12
         )
-    
     plt.tight_layout()
-    
-    # Save the enhanced bar chart
-    plt.savefig(os.path.join(target_mode_dir, f"{target.lower()}_{mode}_avg_utility.png"), 
-                dpi=300, bbox_inches='tight')
+    plt.savefig(
+        os.path.join(
+            target_mode_dir,
+            f"{target.lower()}_{mode}_avg_utility.{FIG_FORMAT}"
+        ),
+        format=FIG_FORMAT,
+        dpi=300,
+        bbox_inches='tight'
+    )
     plt.close()
+
 
 def plot_feature_importances(importance_df, target, mode, output_dir, top_n=15):
     """Plot feature importances for the given target and prediction mode"""
-    # Filter data for the target and mode
-    filtered_df = importance_df[(importance_df['Target'] == target) & 
-                               (importance_df['Mode'] == mode)]
-    
+    filtered_df = importance_df[
+        (importance_df['Target'] == target) & 
+        (importance_df['Mode'] == mode)
+    ]
     if filtered_df.empty:
         print(f"No feature importance data available for {target} with {mode} mode")
         return
     
-    # Get readable title
     title_base = get_readable_title(target, mode)
-    
-    # Create a directory for feature importance plots
     importance_dir = os.path.join(output_dir, f"{target.lower()}_{mode}", "feature_importances")
     os.makedirs(importance_dir, exist_ok=True)
     
-    # Get feature label mapping
     label_mapping = create_feature_label_mapping()
-    
-    # Get all models and datasets
     models = filtered_df['Model'].unique()
     datasets = filtered_df['Dataset'].unique()
-    
-    # Get custom colors for datasets
     has_real = 'Real' in datasets
     colors = get_custom_color_palette(len(datasets), exclude_real=has_real)
     
-    # Plot feature importances for each model across datasets
+    # Per-model feature comparisons
     for model in models:
         model_df = filtered_df[filtered_df['Model'] == model]
-        
         if model_df.empty:
             continue
         
-        # Calculate average importance across datasets for each feature
         feature_avg = model_df.groupby('Feature')['Importance'].mean().reset_index()
-        
-        # Get top N features by average importance
         top_features = feature_avg.nlargest(top_n, 'Importance')['Feature'].tolist()
+        comp_df = pd.DataFrame(index=top_features)
+        for ds in datasets:
+            ds_df = model_df[model_df['Dataset'] == ds]
+            comp_df[ds] = ds_df.set_index('Feature')['Importance'].reindex(top_features, fill_value=0)
         
-        # Create a comparison DataFrame with only top features
-        comparison_df = pd.DataFrame(index=top_features)
+        comp_df['avg'] = comp_df.mean(axis=1)
+        comp_df = comp_df.sort_values('avg', ascending=True).drop('avg', axis=1)
         
-        for i, dataset in enumerate(datasets):
-            dataset_model_df = model_df[model_df['Dataset'] == dataset]
-            if not dataset_model_df.empty:
-                dataset_importances = dataset_model_df.set_index('Feature')['Importance']
-                # Only include values for top features
-                comparison_df[dataset] = dataset_importances.reindex(top_features, fill_value=0)
-        
-        # Sort by average importance
-        comparison_df['avg'] = comparison_df.mean(axis=1)
-        comparison_df = comparison_df.sort_values('avg', ascending=True).drop('avg', axis=1)
-        
-        # Plot comparison as horizontal bar chart
         fig, ax = plt.subplots(figsize=(12, 10))
-        
-        # Reverse the order of the columns (datasets) in the DataFrame
-        comparison_df = comparison_df[comparison_df.columns[::-1]]
-
-        # Reverse the order of the colors
         reversed_colors = colors[::-1]
-
-        # Create the horizontal bar chart with reversed colors
-        comparison_df.plot(
-            kind='barh', 
+        comp_df[comp_df.columns[::-1]].plot(
+            kind='barh',
             ax=ax,
-            color=[reversed_colors[i % len(reversed_colors)] for i in range(len(comparison_df.columns))],
+            color=[reversed_colors[i % len(reversed_colors)] for i in range(len(comp_df.columns))],
             width=0.8
         )
         
-        # Apply label mapping to y-axis labels
         readable_labels = []
-        for feature in comparison_df.index:
-            readable = feature
-            for key in label_mapping:
-                if feature == key:
-                    readable = label_mapping[key]
-                    break
-                elif feature.startswith(key + '_'):
-                    # Handle one-hot encoded features
-                    category_value = feature[len(key)+1:]
-                    readable = f"{label_mapping.get(key, key)}: {category_value}"
-                    break
-            readable_labels.append(readable)
-        
-        # Set new y-tick labels with improved style
+        for feat in comp_df.index:
+            label = feat
+            if feat in label_mapping:
+                label = label_mapping[feat]
+            elif any(feat.startswith(k + '_') for k in label_mapping):
+                for k in label_mapping:
+                    if feat.startswith(k + '_'):
+                        cat = feat[len(k) + 1:]
+                        label = f"{label_mapping[k]}: {cat}"
+                        break
+            readable_labels.append(label)
         ax.set_yticklabels(readable_labels, fontsize=10)
-        
-        # Set consistent x-axis limit
-        max_importance = comparison_df.values.max()
-        ax.set_xlim(0, max_importance * 1.1)  # Add 10% margin
-        
-        # Add title and labels
-        fig_title = f'Feature Importance - {model}\n{title_base}'
-        plt.title(fig_title, fontsize=14)
+        ax.set_xlim(0, comp_df.values.max() * 1.1)
+        plt.title(f'Feature Importance - {model}\n{title_base}', fontsize=14)
         plt.xlabel('Normalized Importance', fontsize=12)
-        
-        # Reverse the legend order
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles[::-1], labels[::-1], title='Dataset', loc='lower right', fontsize=10)
-        
-        # Add grid for readability
         plt.grid(axis='x', alpha=0.3)
         plt.tight_layout()
-        
-        # Save the plot
-        plt.savefig(os.path.join(importance_dir, f'{target.lower()}_{mode}_{model.replace(" ", "_")}_feature_comparison.png'), 
-                    dpi=300, bbox_inches='tight')
+        plt.savefig(
+            os.path.join(
+                importance_dir,
+                f"{target.lower()}_{mode}_{model.replace(' ', '_')}_feature_comparison.{FIG_FORMAT}"
+            ),
+            format=FIG_FORMAT,
+            dpi=300,
+            bbox_inches='tight'
+        )
         plt.close()
     
-    # ==== NEW CODE: Create average feature importance across all models ====
-    # Calculate average importance for each feature across all models and datasets
-    avg_importance = filtered_df.groupby('Feature')['Importance'].mean().reset_index()
+    # Average across all models
+    avg_imp = filtered_df.groupby('Feature')['Importance'].mean().reset_index()
+    top_all = avg_imp.nlargest(top_n, 'Importance')['Feature']
+    all_comp = pd.DataFrame(index=top_all)
+    for ds in datasets:
+        ds_avg = filtered_df[filtered_df['Dataset'] == ds].groupby('Feature')['Importance'].mean()
+        all_comp[ds] = ds_avg.reindex(all_comp.index, fill_value=0)
+    all_comp['avg'] = all_comp.mean(axis=1)
+    all_comp = all_comp.sort_values('avg', ascending=True).drop('avg', axis=1)
     
-    # Get top N features by average importance across all models
-    top_features_all_models = avg_importance.nlargest(top_n, 'Importance')
-    
-    # Create dataset-specific averages for these top features
-    all_models_comparison = pd.DataFrame(index=top_features_all_models['Feature'].tolist())
-    
-    for dataset in datasets:
-        dataset_df = filtered_df[filtered_df['Dataset'] == dataset]
-        if not dataset_df.empty:
-            # Calculate average importance across all models for this dataset
-            dataset_avg = dataset_df.groupby('Feature')['Importance'].mean()
-            # Add to the comparison dataframe
-            all_models_comparison[dataset] = dataset_avg.reindex(all_models_comparison.index, fill_value=0)
-    
-    # Sort by average importance across all datasets
-    all_models_comparison['avg'] = all_models_comparison.mean(axis=1)
-    all_models_comparison = all_models_comparison.sort_values('avg', ascending=True).drop('avg', axis=1)
-    
-    # Create the plot
     fig, ax = plt.subplots(figsize=(12, 10))
-    
-    # Reverse the order of the columns (datasets) in the DataFrame
-    all_models_comparison = all_models_comparison[all_models_comparison.columns[::-1]]
-    
-    # Create the horizontal bar chart
-    all_models_comparison.plot(
-        kind='barh', 
+    all_comp[all_comp.columns[::-1]].plot(
+        kind='barh',
         ax=ax,
-        color=[reversed_colors[i % len(reversed_colors)] for i in range(len(all_models_comparison.columns))],
+        color=[reversed_colors[i % len(reversed_colors)] for i in range(len(all_comp.columns))],
         width=0.8
     )
-    
-    # Apply label mapping to y-axis labels
     readable_labels = []
-    for feature in all_models_comparison.index:
-        readable = feature
-        for key in label_mapping:
-            if feature == key:
-                readable = label_mapping[key]
-                break
-            elif feature.startswith(key + '_'):
-                # Handle one-hot encoded features
-                category_value = feature[len(key)+1:]
-                readable = f"{label_mapping.get(key, key)}: {category_value}"
-                break
-        readable_labels.append(readable)
-    
-    # Set new y-tick labels with improved style
+    for feat in all_comp.index:
+        label = feat
+        if feat in label_mapping:
+            label = label_mapping[feat]
+        elif any(feat.startswith(k + '_') for k in label_mapping):
+            for k in label_mapping:
+                if feat.startswith(k + '_'):
+                    cat = feat[len(k) + 1:]
+                    label = f"{label_mapping[k]}: {cat}"
+                    break
+        readable_labels.append(label)
     ax.set_yticklabels(readable_labels, fontsize=10)
-    
-    # Set consistent x-axis limit
-    max_importance = all_models_comparison.values.max()
-    ax.set_xlim(0, max_importance * 1.1)  # Add 10% margin
-    
-    # Add title and labels
-    fig_title = f'Average Feature Importance Across All Models\n{title_base}'
-    plt.title(fig_title, fontsize=14)
+    ax.set_xlim(0, all_comp.values.max() * 1.1)
+    plt.title(f'Average Feature Importance Across All Models\n{title_base}', fontsize=14)
     plt.xlabel('Normalized Importance', fontsize=12)
-    
-    # Reverse the legend order
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles[::-1], labels[::-1], title='Dataset', loc='lower right', fontsize=10)
-    
-    # Add grid for readability
     plt.grid(axis='x', alpha=0.3)
     plt.tight_layout()
-    
-    # Save the plot
-    plt.savefig(os.path.join(importance_dir, f'{target.lower()}_{mode}_all_models_feature_comparison.png'), 
-                dpi=300, bbox_inches='tight')
+    plt.savefig(
+        os.path.join(
+            importance_dir,
+            f"{target.lower()}_{mode}_all_models_feature_comparison.{FIG_FORMAT}"
+        ),
+        format=FIG_FORMAT,
+        dpi=300,
+        bbox_inches='tight'
+    )
     plt.close()
 
+
 def calculate_feature_importance_alignment(importance_df, target, mode, output_dir):
-    """
-    Calculate and plot feature importance alignment scores between real and synthetic data.
-    
-    This function measures how well synthetic data preserves the relative importance of
-    features compared to real data, using cosine similarity and correlation metrics.
-    
-    Args:
-        importance_df (pd.DataFrame): DataFrame containing feature importance results
-        target (str): Target variable
-        mode (str): Prediction mode
-        output_dir (str): Directory to save plots
-    """
-    # Filter data for the target and mode
-    filtered_df = importance_df[(importance_df['Target'] == target) & 
-                               (importance_df['Mode'] == mode)]
-    
+    """Calculate and plot feature importance alignment scores between real and synthetic data."""
+    filtered_df = importance_df[
+        (importance_df['Target'] == target) & 
+        (importance_df['Mode'] == mode)
+    ]
     if filtered_df.empty:
         print(f"No feature importance data available for {target} with {mode} mode")
         return None
     
-    # Get readable title
     title_base = get_readable_title(target, mode)
-    
-    # Create a directory for alignment score plots
     alignment_dir = os.path.join(output_dir, f"{target.lower()}_{mode}")
     os.makedirs(alignment_dir, exist_ok=True)
     
-    # Get all models and datasets
     models = filtered_df['Model'].unique()
     datasets = filtered_df['Dataset'].unique()
-    
-    # We need 'Real' dataset as a reference
     if 'Real' not in datasets:
-        print(f"Real dataset not found in feature importance data for {target} with {mode} mode")
+        print(f"Real dataset not found for {target} with {mode}")
         return None
-    
-    # Get synthetic datasets (all datasets except 'Real') in the same order as they appear in datasets
-    # This preserves the order from the original data
     synthetic_datasets = [d for d in datasets if d != 'Real']
-    
     if not synthetic_datasets:
-        print(f"No synthetic datasets found in feature importance data for {target} with {mode} mode")
+        print(f"No synthetic datasets for {target} with {mode}")
         return None
     
-    # Create a DataFrame to store alignment scores
     alignment_scores = []
-    
-    # For each model and synthetic dataset, calculate alignment score with real data
     for model in models:
         model_df = filtered_df[filtered_df['Model'] == model]
-        
         if model_df.empty:
             continue
-        
-        # Get feature importance vector for real data
-        real_df = model_df[model_df['Dataset'] == 'Real']
-        if real_df.empty:
-            continue
-        
-        # Create real feature importance vector
-        real_importance = real_df.set_index('Feature')['Importance']
-        
-        # Calculate alignment scores for each synthetic dataset
-        for dataset in synthetic_datasets:
-            synthetic_df = model_df[model_df['Dataset'] == dataset]
-            if synthetic_df.empty:
-                continue
-            
-            # Create synthetic feature importance vector
-            synthetic_importance = synthetic_df.set_index('Feature')['Importance']
-            
-            # Align indices to make sure we're comparing the same features
-            all_features = list(set(real_importance.index) | set(synthetic_importance.index))
-            real_vector = np.array([real_importance.get(f, 0) for f in all_features])
-            synthetic_vector = np.array([synthetic_importance.get(f, 0) for f in all_features])
-            
-            # Calculate cosine similarity
-            cosine_sim = np.dot(real_vector, synthetic_vector) / (
-                np.linalg.norm(real_vector) * np.linalg.norm(synthetic_vector)
-            ) if np.linalg.norm(real_vector) * np.linalg.norm(synthetic_vector) > 0 else 0
-            
-            # Calculate Pearson correlation
-            correlation = np.corrcoef(real_vector, synthetic_vector)[0, 1] if len(all_features) > 1 else 0
-            if np.isnan(correlation):
-                correlation = 0
-            
-            # Store alignment scores
+        real_vec = model_df[model_df['Dataset'] == 'Real'].set_index('Feature')['Importance']
+        for ds in synthetic_datasets:
+            synth_vec = model_df[model_df['Dataset'] == ds].set_index('Feature')['Importance']
+            all_feats = list(set(real_vec.index) | set(synth_vec.index))
+            rv = np.array([real_vec.get(f, 0) for f in all_feats])
+            sv = np.array([synth_vec.get(f, 0) for f in all_feats])
+            cosine_sim = (
+                np.dot(rv, sv) / (np.linalg.norm(rv) * np.linalg.norm(sv))
+                if np.linalg.norm(rv) * np.linalg.norm(sv) > 0 else 0
+            )
+            corr = (
+                np.corrcoef(rv, sv)[0, 1]
+                if len(all_feats) > 1 else 0
+            )
+            if np.isnan(corr):
+                corr = 0
             alignment_scores.append({
                 'Target': target,
                 'Mode': mode,
                 'Model': model,
-                'Dataset': dataset,
+                'Dataset': ds,
                 'CosineSimScore': cosine_sim,
-                'CorrelationScore': correlation,
-                'NumFeatures': len(all_features)
+                'CorrelationScore': corr,
+                'NumFeatures': len(all_feats)
             })
     
-    # Convert to DataFrame
     alignment_df = pd.DataFrame(alignment_scores)
-    
     if alignment_df.empty:
-        print(f"Could not calculate alignment scores for {target} with {mode} mode")
+        print(f"Could not calculate alignment for {target} with {mode}")
         return None
     
-    # Calculate average scores across models for each dataset
     avg_scores = alignment_df.groupby('Dataset')[['CosineSimScore', 'CorrelationScore']].mean().reset_index()
     
-    # Plot heatmap of alignment scores by model and dataset
+    # Heatmap of cosine similarity
     plt.figure(figsize=(12, 8))
-    
-    # Pivot for cosine similarity scores
-    cosine_heatmap = alignment_df.pivot(index='Model', columns='Dataset', values='CosineSimScore')
-    
-    # Ensure columns are in the same order as synthetic_datasets
-    # This maintains consistency with other plots
-    cosine_heatmap = cosine_heatmap[synthetic_datasets]
-    
-    # Use a custom colormap (viridis)
-    cmap = plt.cm.viridis
-    
-    # Create heatmap
+    cos_heat = alignment_df.pivot(index='Model', columns='Dataset', values='CosineSimScore')
+    cos_heat = cos_heat[synthetic_datasets]
     ax = sns.heatmap(
-        cosine_heatmap, 
-        annot=True, 
-        cmap=cmap,
-        vmin=0, 
-        vmax=1, 
+        cos_heat,
+        annot=True,
+        cmap=plt.cm.viridis,
+        vmin=0,
+        vmax=1,
         fmt='.2f',
         cbar_kws={'label': 'Cosine Similarity Score (higher is better)'},
         linewidths=0.5,
         linecolor='white',
         annot_kws={"size": 12}
     )
-    
-    # Set title and labels
     plt.title(f'{title_base} - Feature Importance Alignment (Cosine Similarity)', fontsize=14)
     plt.xlabel('Synthetic Dataset', fontsize=12)
     plt.ylabel('Model', fontsize=12)
-    
-    # Improve tick label size
     plt.xticks(fontsize=11)
     plt.yticks(fontsize=11)
-    
-    # Add a border around the heatmap
     for _, spine in ax.spines.items():
         spine.set_visible(True)
         spine.set_linewidth(1.0)
-    
     plt.tight_layout()
-    
-    # Save the heatmap
-    plt.savefig(os.path.join(alignment_dir, f"{target.lower()}_{mode}_cosine_alignment_heatmap.png"), 
-                dpi=300, bbox_inches='tight')
+    plt.savefig(
+        os.path.join(
+            alignment_dir,
+            f"{target.lower()}_{mode}_cosine_alignment_heatmap.{FIG_FORMAT}"
+        ),
+        format=FIG_FORMAT,
+        dpi=300,
+        bbox_inches='tight'
+    )
     plt.close()
     
-    # Plot average scores by dataset as a bar chart
+    # Bar chart of average cosine similarity
+    ordered_avg = pd.concat([
+        avg_scores[avg_scores['Dataset'] == ds]
+        for ds in synthetic_datasets
+    ], ignore_index=True)
     plt.figure(figsize=(10, 6))
-    
-    # Ensure datasets are in the same order as synthetic_datasets for consistency
-    # Create a new DataFrame with ordered datasets
-    ordered_avg_scores = pd.DataFrame()
-    for dataset in synthetic_datasets:
-        dataset_score = avg_scores[avg_scores['Dataset'] == dataset]
-        if not dataset_score.empty:
-            ordered_avg_scores = pd.concat([ordered_avg_scores, dataset_score])
-    
-    # Use custom color palette
-    colors = get_custom_color_palette(len(synthetic_datasets))
-    
-    # Create bar chart for cosine similarity
     bars = plt.bar(
-        ordered_avg_scores['Dataset'],
-        ordered_avg_scores['CosineSimScore'],
-        alpha=0.8,
-        color=colors,
-        width=0.6
+        ordered_avg['Dataset'],
+        ordered_avg['CosineSimScore'],
+        color=get_custom_color_palette(len(synthetic_datasets)),
+        width=0.4
     )
-    
-    # Add value annotations on bars
     for bar in bars:
-        height = bar.get_height()
+        h = bar.get_height()
         plt.text(
             bar.get_x() + bar.get_width()/2.,
-            height + 0.02,
-            f'{height:.2f}',
-            ha='center', 
+            h + 0.02,
+            f'{h:.2f}',
+            ha='center',
             fontsize=12
         )
-    
-    # Set title and labels
     plt.title(f'{title_base} - Average Feature Importance Alignment', fontsize=14)
     plt.xlabel('Synthetic Dataset', fontsize=12)
     plt.ylabel('Cosine Similarity Score', fontsize=12)
@@ -802,139 +579,108 @@ def calculate_feature_importance_alignment(importance_df, target, mode, output_d
     plt.grid(axis='y', alpha=0.3)
     plt.xticks(fontsize=11)
     plt.yticks(fontsize=11)
-    
-    # Add a horizontal line at 1.0 for reference (perfect alignment)
     plt.axhline(y=1.0, color='r', linestyle='--', alpha=0.5)
     plt.text(0.02, 1.02, 'Perfect Alignment', color='r', fontsize=10)
-    
     plt.tight_layout()
-    
-    # Save the bar chart
-    plt.savefig(os.path.join(alignment_dir, f"{target.lower()}_{mode}_avg_alignment_score.png"), 
-                dpi=300, bbox_inches='tight')
+    plt.savefig(
+        os.path.join(
+            alignment_dir,
+            f"{target.lower()}_{mode}_avg_alignment_score.{FIG_FORMAT}"
+        ),
+        format=FIG_FORMAT,
+        dpi=300,
+        bbox_inches='tight'
+    )
     plt.close()
     
-    # Return the alignment scores DataFrame
     return alignment_df
+
 
 def main():
     """Main function to generate plots from CSV results"""
-    # Parse command line arguments
     parser = setup_argparse()
     args = parser.parse_args()
     
-    # Set output directory if not specified
+    # Override global figure format
+    global FIG_FORMAT
+    FIG_FORMAT = args.fig_format
+    
     if args.output_dir is None:
         args.output_dir = os.path.join(args.results_dir, "plots")
-    
-    # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
     print(f"Reading evaluation results from {args.results_dir}")
-    
-    # Set plot style for consistent appearance
     plt.style.use('default')  # Reset to default style
-    # Set custom style elements
     plt.rcParams.update({
         'font.family': 'sans-serif',
         'font.sans-serif': ['DejaVu Sans', 'Arial', 'Liberation Sans', 'Bitstream Vera Sans', 'sans-serif'],
-        'font.weight': 'normal',  # Use normal weight instead of bold
-        'axes.facecolor': '#f8f8f8',  # Light gray background
+        'font.weight': 'normal',
+        'axes.facecolor': '#f8f8f8',
         'figure.facecolor': 'white',
         'figure.dpi': 100,
         'savefig.dpi': 300,
         'savefig.bbox': 'tight',
         'savefig.pad_inches': 0.1,
-        'axes.labelweight': 'normal',  # Normal weight for axis labels
-        'axes.titleweight': 'normal',  # Normal weight for titles
+        'axes.labelweight': 'normal',
+        'axes.titleweight': 'normal',
         'xtick.labelsize': 10,
         'ytick.labelsize': 10,
         'axes.labelsize': 12,
         'axes.titlesize': 14
     })
     
-    # Load results from CSV files
     performance_path = os.path.join(args.results_dir, 'all_performance_results.csv')
     utility_path = os.path.join(args.results_dir, 'all_utility_results.csv')
-    
     if not os.path.exists(performance_path):
         raise FileNotFoundError(f"Performance results file not found at {performance_path}")
-    
     if not os.path.exists(utility_path):
         raise FileNotFoundError(f"Utility results file not found at {utility_path}")
     
     performance_df = pd.read_csv(performance_path)
     utility_df = pd.read_csv(utility_path)
     
-    # Load feature importance data
     importance_df = None
     if 'feature_importance' in args.plot_types:
-        # Check for the consolidated all_feature_importances.csv file
         importance_path = os.path.join(args.results_dir, 'all_feature_importances.csv')
         if os.path.exists(importance_path):
             print(f"Loading feature importance data from {importance_path}")
             importance_df = pd.read_csv(importance_path)
         else:
-            # Check if there's a directory with feature importances as fallback
             importance_dir = os.path.join(args.results_dir, 'feature_importances')
             if os.path.isdir(importance_dir):
-                # Find all CSV files in the directory
-                importance_files = [f for f in os.listdir(importance_dir) if f.endswith('.csv')]
-                
-                if importance_files:
-                    # Load and concatenate all feature importance files
-                    importance_dfs = []
-                    for file in importance_files:
-                        file_path = os.path.join(importance_dir, file)
-                        importance_dfs.append(pd.read_csv(file_path))
-                    
-                    importance_df = pd.concat(importance_dfs, ignore_index=True)
+                files = [f for f in os.listdir(importance_dir) if f.endswith('.csv')]
+                if files:
+                    dfs = [pd.read_csv(os.path.join(importance_dir, f)) for f in files]
+                    importance_df = pd.concat(dfs, ignore_index=True)
                 else:
-                    print("No feature importance CSV files found. Skipping feature importance plots.")
+                    print("No feature importance CSV files found. Skipping.")
             else:
-                print("Feature importance data not found. Skipping feature importance plots.")
+                print("Feature importance data not found. Skipping.")
     
-    # Get unique targets and modes from the data
     targets = args.targets or performance_df['Target'].unique()
     modes = args.prediction_modes or performance_df['Mode'].unique()
     
-    # Generate plots for each target and mode
     for target in targets:
         for mode in modes:
-            # Skip tactical mode for departure delay since it doesn't make sense
             if target == 'DEPARTURE_DELAY_MIN' and mode == 'tactical':
                 print(f"Skipping {target} with {mode} mode (not applicable)")
                 continue
-            
             print(f"Generating plots for {target} ({mode} mode)")
-            
-            # Performance plots
             if 'performance' in args.plot_types:
-                print(f"  Generating performance plots")
                 plot_performance_metrics(performance_df, target, mode, args.output_dir)
-            
-            # Utility plots
             if 'utility' in args.plot_types:
-                print(f"  Generating utility plots")
                 plot_utility_scores(utility_df, target, mode, args.output_dir)
-            
-            # Feature importance plots
             if 'feature_importance' in args.plot_types and importance_df is not None:
-                print(f"  Generating feature importance plots")
                 plot_feature_importances(importance_df, target, mode, args.output_dir, args.top_n_features)
-            
-                        # Feature alignment plots
             if 'feature_alignment' in args.plot_types and importance_df is not None:
-                print(f"  Generating feature alignment plots")
-                alignment_df = calculate_feature_importance_alignment(importance_df, target, mode, args.output_dir)
-                
+                calculate_feature_importance_alignment(importance_df, target, mode, args.output_dir)
+    
     print(f"All plots generated and saved to {args.output_dir}")
-    if 'feature_alignment' in args.plot_types:
-        print(f"Feature alignment scores saved to {os.path.join(args.output_dir, 'alignment_scores')}")
 
 
 if __name__ == "__main__":
     main()
+
 
 # Example usage:
 # python scripts/generate_tstr_plots.py --results_dir tstr_results --output_dir tstr_plots
