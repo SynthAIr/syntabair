@@ -14,6 +14,7 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -51,8 +52,8 @@ def setup_argparse():
         "--plot_formats",
         type=str,
         nargs="+",
-        default=["png"],
-        choices=["png", "pdf", "svg"],
+        default=["pdf"],
+        choices=["png", "pdf", "svg", "jpg", "jpeg"],
         help="Output formats for the plots"
     )
     parser.add_argument(
@@ -61,6 +62,17 @@ def setup_argparse():
         default="whitegrid",
         choices=["darkgrid", "whitegrid", "dark", "white", "ticks"],
         help="Seaborn plot style"
+    )
+    parser.add_argument(
+        "--font_scale",
+        type=float,
+        default=1.5,
+        help="Font size scaling factor (default: 1.5)"
+    )
+    parser.add_argument(
+        "--no_titles",
+        action="store_false",
+        help="Remove titles from all plots"
     )
     
     return parser
@@ -111,7 +123,34 @@ def get_custom_color_palette(num_colors):
         return custom_colors[:num_colors]
 
 
-def plot_privacy_scores(results_df, output_dir, plot_formats):
+def save_plot(filename_base, output_dir, plot_formats):
+    """
+    Save the current plot in all requested formats
+    
+    Args:
+        filename_base (str): Base filename without extension
+        output_dir (str): Output directory
+        plot_formats (list): List of output formats
+    """
+    for fmt in plot_formats:
+        # Handle jpeg as jpg
+        if fmt == 'jpeg':
+            fmt = 'jpg'
+        
+        filename = os.path.join(output_dir, f"{filename_base}.{fmt}")
+        
+        # Use different DPI settings for different formats
+        if fmt in ['jpg', 'jpeg', 'png']:
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        elif fmt == 'pdf':
+            plt.savefig(filename, dpi=300, bbox_inches='tight', format='pdf')
+        elif fmt == 'svg':
+            plt.savefig(filename, bbox_inches='tight', format='svg')
+        else:
+            plt.savefig(filename, bbox_inches='tight')
+
+
+def plot_privacy_scores(results_df, output_dir, plot_formats, font_scale=1.0, no_titles=False):
     """
     Create bar charts for privacy scores
     
@@ -119,6 +158,8 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         results_df (pd.DataFrame): Results dataframe with combined metrics
         output_dir (str): Output directory
         plot_formats (list): List of output formats
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     # Check for baseline protection metric
     if 'BaselineProtectionScore' in results_df.columns:
@@ -135,10 +176,14 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         bars = plt.bar(datasets, baseline_scores, color=colors)
         
         # Add labels, title
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Privacy Score (higher is better)', fontsize=12)
-        plt.title('Baseline Protection Score (higher is better)', fontsize=14)
-        # plt.xticks(rotation=45, ha='right')
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Privacy Score (higher is better)', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Baseline Protection Score (higher is better)', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
         
         # Add value annotations on bars
         for bar in bars:
@@ -149,7 +194,7 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
                 f'{height:.2f}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         plt.ylim(0, 1.1)
@@ -157,9 +202,7 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"baseline_protection_score.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("baseline_protection_score", output_dir, plot_formats)
             
         plt.close()
     
@@ -178,10 +221,14 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         bars = plt.bar(datasets, overfitting_scores, color=colors)
         
         # Add labels, title
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Privacy Score (higher is better)', fontsize=12)
-        plt.title('Overfitting Protection Score (higher is better)', fontsize=14)
-        # plt.xticks(rotation=45, ha='right')
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Privacy Score (higher is better)', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Overfitting Protection Score (higher is better)', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
         
         # Add value annotations on bars
         for bar in bars:
@@ -192,7 +239,7 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
                 f'{height:.2f}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         plt.ylim(0, 1.1)
@@ -200,9 +247,7 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"overfitting_protection_score.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("overfitting_protection_score", output_dir, plot_formats)
             
         plt.close()
     
@@ -225,10 +270,14 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         bars = plt.bar(datasets, avg_scores, color=colors)
         
         # Add labels and title
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Average Privacy Score', fontsize=12)
-        plt.title('Average Privacy Protection Score (higher is better)', fontsize=14)
-        # plt.xticks(rotation=45, ha='right')
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Average Privacy Score', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Average Privacy Protection Score (higher is better)', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
         
         # Add value annotations on bars
         for bar in bars:
@@ -239,7 +288,7 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
                 f'{height:.2f}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         plt.ylim(0, 1.1)
@@ -247,14 +296,12 @@ def plot_privacy_scores(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"average_privacy_score.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("average_privacy_score", output_dir, plot_formats)
             
         plt.close()
 
 
-def plot_baseline_details(results_df, output_dir, plot_formats):
+def plot_baseline_details(results_df, output_dir, plot_formats, font_scale=1.0, no_titles=False):
     """
     Create detailed plots for baseline protection
     
@@ -262,6 +309,8 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
         results_df (pd.DataFrame): Results dataframe
         output_dir (str): Output directory
         plot_formats (list): List of output formats
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     if 'SyntheticMedianDCR' in results_df.columns and 'RandomMedianDCR' in results_df.columns:
         datasets = results_df['Dataset']
@@ -285,11 +334,13 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
                       color=colors, label='Random Data', hatch='////')
         
         # Add labels, title, and legend
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Median DCR to Real Data', fontsize=12)
-        plt.title('Distance to Closest Record (DCR) Comparison', fontsize=14)
-        plt.xticks(x, datasets)
-        plt.legend()
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Median DCR to Real Data', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Distance to Closest Record (DCR) Comparison', fontsize=14 * font_scale)
+        plt.xticks(x, datasets, fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
+        plt.legend(fontsize=10 * font_scale)
         
         # Add value annotations on bars
         for bar in bars1:
@@ -300,7 +351,7 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
                 f'{height:.3f}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         for bar in bars2:
@@ -311,7 +362,7 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
                 f'{height:.3f}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         # Set y-axis limits with some padding
@@ -322,9 +373,7 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"baseline_protection_dcr_comparison.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("baseline_protection_dcr_comparison", output_dir, plot_formats)
             
         plt.close()
         
@@ -340,15 +389,15 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
         # Plot bars
         bars = plt.bar(datasets, ratio, color=colors)
         
-        # Add a horizontal line at y=1.0
-        # plt.axhline(y=1.0, color='red', linestyle='--', alpha=0.7, label='Equal DCR')
-        
         # Add labels and title
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Synthetic DCR / Random DCR Ratio', fontsize=12)
-        plt.title('Ratio of Synthetic to Random DCR (lower is better)', fontsize=14)
-        # plt.xticks(rotation=45, ha='right')
-        # plt.legend()
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Synthetic DCR / Random DCR Ratio', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Ratio of Synthetic to Random DCR (lower is better)', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
         
         # Add value annotations on bars
         for bar in bars:
@@ -359,7 +408,7 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
                 f'{height:.2f}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         # Set y-axis limits with some padding
@@ -369,14 +418,12 @@ def plot_baseline_details(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"baseline_protection_dcr_ratio.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("baseline_protection_dcr_ratio", output_dir, plot_formats)
             
         plt.close()
 
 
-def plot_overfitting_details(results_df, output_dir, plot_formats):
+def plot_overfitting_details(results_df, output_dir, plot_formats, font_scale=1.0, no_titles=False):
     """
     Create detailed plots for overfitting protection
     
@@ -384,6 +431,8 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
         results_df (pd.DataFrame): Results dataframe
         output_dir (str): Output directory
         plot_formats (list): List of output formats
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     if 'CloserToTraining' in results_df.columns and 'CloserToHoldout' in results_df.columns:
         datasets = results_df['Dataset']
@@ -408,11 +457,13 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
                         label='Closer to Holdout Data', edgecolor='black', linewidth=0.5)
         
         # Add labels, title, and legend
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Percentage of Synthetic Rows', fontsize=12)
-        plt.title('Distribution of Proximity to Training vs. Holdout Data', fontsize=14)
-        plt.xticks(x, datasets)
-        plt.legend(loc='best')
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Percentage of Synthetic Rows', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Distribution of Proximity to Training vs. Holdout Data', fontsize=14 * font_scale)
+        plt.xticks(x, datasets, fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
+        plt.legend(loc='best', fontsize=10 * font_scale)
         
         # Add percentage annotations on bars
         for bar in bars1:
@@ -424,7 +475,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
                     f'{height:.1%}',
                     ha='center',
                     va='center',
-                    fontsize=10,
+                    fontsize=10 * font_scale,
                     color='black'
                 )
         
@@ -437,7 +488,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
                     f'{height:.1%}',
                     ha='center',
                     va='center',
-                    fontsize=10,
+                    fontsize=10 * font_scale,
                     color='black'
                 )
         
@@ -446,9 +497,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"overfitting_protection_comparison.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("overfitting_protection_comparison", output_dir, plot_formats)
             
         plt.close()
         
@@ -462,11 +511,16 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
         bars2 = plt.bar(datasets, closer_to_holdout, bottom=closer_to_training, color=colors,   alpha=0.7, hatch='////', label='Closer to Holdout Data', edgecolor='black', linewidth=0.5)
         
         # Add labels, title, and legend
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Percentage of Synthetic Rows', fontsize=12)
-        plt.title('Distribution of Proximity to Training vs. Holdout Data', fontsize=14)
-        # plt.xticks(rotation=45, ha='right')
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Percentage of Synthetic Rows', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Distribution of Proximity to Training vs. Holdout Data', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
+        
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2, fontsize=10 * font_scale)
         
         # Add percentage annotations on bars
         for i, dataset in enumerate(datasets):
@@ -479,7 +533,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
                     f'{training_pct:.1%}',
                     ha='center',
                     va='center',
-                    fontsize=10,
+                    fontsize=10 * font_scale,
                     color='black'
                 )
             
@@ -492,7 +546,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
                     f'{holdout_pct:.1%}',
                     ha='center',
                     va='center',
-                    fontsize=10,
+                    fontsize=10 * font_scale,
                     color='black'
                 )
         
@@ -501,9 +555,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"overfitting_protection_percentages.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("overfitting_protection_percentages", output_dir, plot_formats)
             
         plt.close()
         
@@ -517,11 +569,16 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
         plt.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, label='Ideal Balance (50%)')
         
         # Add labels and title
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel('Percentage of Rows Closer to Holdout', fontsize=12)
-        plt.title('Percentage of Synthetic Data Closer to Holdout Set', fontsize=14)
-        # plt.xticks(rotation=45, ha='right')
-        plt.legend()
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel('Percentage of Rows Closer to Holdout', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Percentage of Synthetic Data Closer to Holdout Set', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
+        
+        plt.legend(fontsize=10 * font_scale)
         
         # Add value annotations on bars
         for bar in bars:
@@ -532,7 +589,7 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
                 f'{height:.1%}',
                 ha='center', 
                 va='bottom',
-                fontsize=10
+                fontsize=10 * font_scale
             )
         
         plt.ylim(0, 1.0)
@@ -540,14 +597,12 @@ def plot_overfitting_details(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"overfitting_protection_holdout_percentage.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("overfitting_protection_holdout_percentage", output_dir, plot_formats)
             
         plt.close()
 
 
-def plot_privacy_comparison(results_df, output_dir, plot_formats):
+def plot_privacy_comparison(results_df, output_dir, plot_formats, font_scale=1.0, no_titles=False):
     """
     Create comparison plots between privacy metrics
     
@@ -555,6 +610,8 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
         results_df (pd.DataFrame): Results dataframe with both metrics
         output_dir (str): Output directory
         plot_formats (list): List of output formats
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     if 'BaselineProtectionScore' in results_df.columns and 'OverfittingProtectionScore' in results_df.columns:
         # Create scatter plot
@@ -580,7 +637,7 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
                     (row['BaselineProtectionScore'], row['OverfittingProtectionScore']),
                     xytext=(5, 5), 
                     textcoords='offset points',
-                    fontsize=10,
+                    fontsize=10 * font_scale,
                     ha='right'
                 )
             else:
@@ -589,7 +646,7 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
                     (row['BaselineProtectionScore'], row['OverfittingProtectionScore']),
                     xytext=(5, 5),
                     textcoords='offset points',
-                    fontsize=10
+                    fontsize=10 * font_scale
                 )
         
         # Add reference lines at 0.5
@@ -608,19 +665,26 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
         
         # Add quadrant labels
         plt.text(0.25, 0.75, "Good Overfitting Protection,\nPoor Baseline Protection", 
-                 ha='center', va='center', fontsize=10, alpha=0.7)
+                 ha='center', va='center', fontsize=10 * font_scale, alpha=0.7)
         plt.text(0.75, 0.75, "Good Privacy Overall", 
-                 ha='center', va='center', fontsize=10, alpha=0.7)
+                 ha='center', va='center', fontsize=10 * font_scale, alpha=0.7)
         plt.text(0.25, 0.25, "Poor Privacy Overall", 
-                 ha='center', va='center', fontsize=10, alpha=0.7)
+                 ha='center', va='center', fontsize=10 * font_scale, alpha=0.7)
         plt.text(0.75, 0.25, "Good Baseline Protection,\nPoor Overfitting Protection", 
-                 ha='center', va='center', fontsize=10, alpha=0.7)
+                 ha='center', va='center', fontsize=10 * font_scale, alpha=0.7)
         
         # Add labels and title
-        plt.xlabel('Baseline Protection Score', fontsize=12)
-        plt.ylabel('Overfitting Protection Score', fontsize=12)
-        plt.title('Privacy Protection Metrics Comparison', fontsize=14)
-        plt.legend(title='Synthetic Data Model', loc='upper right')
+        plt.xlabel('Baseline Protection Score', fontsize=12 * font_scale)
+        plt.ylabel('Overfitting Protection Score', fontsize=12 * font_scale)
+        if not no_titles:
+            plt.title('Privacy Protection Metrics Comparison', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
+        
+        plt.legend(title='Synthetic Data Model', loc='lower right', fontsize=8 * font_scale, 
+                  title_fontsize=9 * font_scale)
         
         # Set limits with padding
         plt.xlim(-0.1, 1.1)
@@ -630,9 +694,7 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"privacy_metrics_comparison.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("privacy_metrics_comparison", output_dir, plot_formats)
             
         plt.close()
         
@@ -651,11 +713,12 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
         ax = plt.subplot(111, polar=True)
         
         # Draw category labels
-        plt.xticks(angles[:-1], categories, fontsize=12)
+        plt.xticks(angles[:-1], categories, fontsize=12 * font_scale)
         
         # Draw y-axis labels
         ax.set_rlabel_position(0)
-        plt.yticks([0.2, 0.4, 0.6, 0.8, 1.0], ["0.2", "0.4", "0.6", "0.8", "1.0"], fontsize=10)
+        plt.yticks([0.2, 0.4, 0.6, 0.8, 1.0], ["0.2", "0.4", "0.6", "0.8", "1.0"], 
+                  fontsize=10 * font_scale)
         plt.ylim(0, 1)
         
         # Get custom colors
@@ -672,15 +735,15 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
             ax.fill(angles, values, color=colors[i], alpha=0.1)
         
         # Add legend
-        plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), title="Synthetic Data Model")
+        plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), title="Synthetic Data Model",
+                  fontsize=10 * font_scale, title_fontsize=11 * font_scale)
         
         # Add title
-        plt.title('Privacy Protection Metrics Comparison', y=1.1, fontsize=14)
+        if not no_titles:
+            plt.title('Privacy Protection Metrics Comparison', y=1.1, fontsize=14 * font_scale)
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"privacy_metrics_radar.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("privacy_metrics_radar", output_dir, plot_formats)
             
         plt.close()
         
@@ -692,7 +755,7 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
         heatmap_data.columns = ['Baseline Protection', 'Overfitting Protection']
         
         # Create heatmap
-        sns.heatmap(
+        ax = sns.heatmap(
             heatmap_data, 
             annot=True, 
             cmap='YlGnBu', 
@@ -700,17 +763,27 @@ def plot_privacy_comparison(results_df, output_dir, plot_formats):
             vmax=1,
             fmt='.2f',
             linewidths=0.5,
+            annot_kws={'fontsize': 9 * font_scale},
             cbar_kws={'label': 'Privacy Score (higher is better)'}
         )
         
+        # Scale colorbar label
+        cbar = ax.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=10 * font_scale)
+        cbar.set_label('Privacy Score (higher is better)', fontsize=11 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
+        
         # Add title
-        plt.title('Privacy Protection Scores Heatmap', fontsize=14)
+        if not no_titles:
+            plt.title('Privacy Protection Scores Heatmap', fontsize=14 * font_scale)
+        
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"privacy_metrics_heatmap.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot("privacy_metrics_heatmap", output_dir, plot_formats)
             
         plt.close()
 
@@ -730,6 +803,18 @@ def main():
     
     # Set plot style
     sns.set_style(args.style)
+    
+    # Set base font sizes with matplotlib rcParams
+    base_font_size = 10
+    plt.rcParams.update({
+        'font.size': base_font_size * args.font_scale,
+        'axes.titlesize': 14 * args.font_scale,
+        'axes.labelsize': 12 * args.font_scale,
+        'xtick.labelsize': 10 * args.font_scale,
+        'ytick.labelsize': 10 * args.font_scale,
+        'legend.fontsize': 10 * args.font_scale,
+        'legend.title_fontsize': 12 * args.font_scale
+    })
     
     # Set up plot types
     plot_types = args.plot_types
@@ -776,22 +861,26 @@ def main():
     if results_df is not None:
         if "scores" in plot_types:
             print("Generating privacy score plots...")
-            plot_privacy_scores(results_df, args.output_dir, args.plot_formats)
+            plot_privacy_scores(results_df, args.output_dir, args.plot_formats, 
+                              args.font_scale, args.no_titles)
         
         if "details" in plot_types:
             print("Generating detailed plots...")
             
             if 'SyntheticMedianDCR' in results_df.columns:
                 print("  Generating baseline protection details...")
-                plot_baseline_details(results_df, args.output_dir, args.plot_formats)
+                plot_baseline_details(results_df, args.output_dir, args.plot_formats, 
+                                    args.font_scale, args.no_titles)
             
             if 'CloserToTraining' in results_df.columns:
                 print("  Generating overfitting protection details...")
-                plot_overfitting_details(results_df, args.output_dir, args.plot_formats)
+                plot_overfitting_details(results_df, args.output_dir, args.plot_formats, 
+                                       args.font_scale, args.no_titles)
         
         if "comparison" in plot_types and 'BaselineProtectionScore' in results_df.columns and 'OverfittingProtectionScore' in results_df.columns:
             print("Generating comparison plots...")
-            plot_privacy_comparison(results_df, args.output_dir, args.plot_formats)
+            plot_privacy_comparison(results_df, args.output_dir, args.plot_formats, 
+                                  args.font_scale, args.no_titles)
     
     print(f"All plots generated and saved to {args.output_dir}")
 
@@ -801,3 +890,7 @@ if __name__ == "__main__":
 
 # Example usage:
 # python scripts/plot_privacy.py --results_dir results/privacy --output_dir results/privacy/plots --plot_types all
+# Example with multiple formats:
+# python scripts/plot_privacy.py --results_dir results/privacy --output_dir plots --plot_formats png pdf jpg
+# Example with font scaling and no titles:
+# python scripts/plot_privacy.py --results_dir results/privacy --font_scale 1.5 --no_titles

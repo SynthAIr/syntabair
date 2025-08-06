@@ -16,6 +16,10 @@ import seaborn as sns
 # Default figure format (will be overridden by CLI argument)
 FIG_FORMAT = "png"
 
+# Font size scaling factor for academic papers
+FONT_SCALE = 1.0  # No scaling
+# Note: Value labels use smaller scale (8-10pt base) for less clutter
+
 
 def setup_argparse():
     """Set up command line argument parser"""
@@ -74,6 +78,12 @@ def setup_argparse():
         default="pdf",
         help="Format of the saved figures"
     )
+    parser.add_argument(
+        "--font_scale",
+        type=float,
+        default=1.5,
+        help="Font size scaling factor (default: 1.5 for academic papers, 1.0 for standard). Value labels use ~60%% of this scale."
+    )
     
     return parser
 
@@ -120,6 +130,28 @@ def get_custom_color_palette(num_colors, exclude_real=False):
             return result_colors[:num_colors]
         else:
             return custom_colors[:num_colors]
+
+
+def create_model_name_mapping():
+    """Mapping between long model names and shorter display names"""
+    return {
+        'Gradient Boosting': 'GradBoost',
+        'Random Forest': 'RandomForest',
+        'Linear Regression': 'LinearReg',
+        'Support Vector Machine': 'SVM',
+        'Neural Network': 'NN',
+        'XGBoost': 'XGBoost',
+        'LightGBM': 'LightGBM',
+        'Decision Tree': 'DecisionTree',
+        'K-Nearest Neighbors': 'KNN',
+        'Logistic Regression': 'Logistic'
+    }
+
+
+def get_short_model_name(model_name):
+    """Get shortened model name for display"""
+    mapping = create_model_name_mapping()
+    return mapping.get(model_name, model_name)
 
 
 def create_feature_label_mapping():
@@ -169,14 +201,16 @@ def plot_performance_metrics(performance_df, target, mode, output_dir):
     os.makedirs(target_mode_dir, exist_ok=True)
     
     metrics = [
-        ('RMSE', 'Root Mean Squared Error (lower is better)'),
-        ('MAE', 'Mean Absolute Error (lower is better)'),
-        ('R2', 'R² Score (higher is better)')
+        ('RMSE', 'Root Mean Squared Error'),
+        ('MAE', 'Mean Absolute Error'),
+        ('R2', 'R² Score')
     ]
     
     for metric, metric_title in metrics:
         plt.figure(figsize=(14, 8))
         models = filtered_df['Model'].unique()
+        # Get short model names for display
+        short_models = [get_short_model_name(model) for model in models]
         datasets = filtered_df['Dataset'].unique()
         x = np.arange(len(models))
         width = 0.8 / len(datasets)
@@ -192,14 +226,15 @@ def plot_performance_metrics(performance_df, target, mode, output_dir):
             color_index = 0 if (dataset == 'Real' and has_real) else i
             plt.bar(x + i*width, values, width, label=dataset, color=colors[color_index])
         
-        plt.xlabel('Model', fontsize=12)
-        plt.ylabel(metric_title, fontsize=12)
-        plt.title(f'{title_base} - {metric_title}', fontsize=14)
-        plt.xticks(x + width*(len(datasets)-1)/2, models)
+        plt.xlabel('Model', fontsize=18 * FONT_SCALE)
+        plt.ylabel(metric_title, fontsize=18 * FONT_SCALE)
+        # Use short model names and rotate if needed
+        plt.xticks(x + width*(len(datasets)-1)/2, short_models, fontsize=12 * FONT_SCALE, rotation=45, ha='right')
+        plt.yticks(fontsize=14 * FONT_SCALE)
         plt.grid(axis='y', alpha=0.3)
-        plt.legend(title='Dataset', title_fontsize=12, fontsize=10, loc='best')
-        plt.tight_layout()
+        plt.legend(title='Dataset', title_fontsize=16 * FONT_SCALE, fontsize=14 * FONT_SCALE, loc='best')
         
+        # Add value labels with smaller font size
         for i, dataset in enumerate(datasets):
             dataset_data = filtered_df[filtered_df['Dataset'] == dataset]
             for j, model in enumerate(models):
@@ -213,8 +248,11 @@ def plot_performance_metrics(performance_df, target, mode, output_dir):
                         fmt,
                         ha='center',
                         va='bottom',
-                        fontsize=9
+                        fontsize=8 * FONT_SCALE,  # Smaller font size for values
+                        rotation=90 if len(fmt) > 4 else 0  # Rotate long values
                     )
+        
+        plt.tight_layout()
         
         # Save the plot in the requested format
         plt.savefig(
@@ -245,6 +283,8 @@ def plot_utility_scores(utility_df, target, mode, output_dir):
     
     datasets = filtered_df['Dataset'].unique()
     models = filtered_df['Model'].unique()
+    # Get short model names for heatmap display
+    short_models = [get_short_model_name(model) for model in models]
     colors = get_custom_color_palette(len(datasets))
     
     # Heatmap of overall utility scores
@@ -252,7 +292,7 @@ def plot_utility_scores(utility_df, target, mode, output_dir):
     heatmap_data = filtered_df.pivot(index='Model', columns='Dataset', values='Overall Utility')
     heatmap_data = heatmap_data[datasets]
     heatmap_values = heatmap_data.values
-    ordered_heatmap = pd.DataFrame(heatmap_values, index=models, columns=datasets)
+    ordered_heatmap = pd.DataFrame(heatmap_values, index=short_models, columns=datasets)
     cmap = plt.cm.YlGnBu
     ax = sns.heatmap(
         ordered_heatmap,
@@ -264,13 +304,15 @@ def plot_utility_scores(utility_df, target, mode, output_dir):
         cbar_kws={'label': 'Utility Score (higher is better)'},
         linewidths=0.5,
         linecolor='white',
-        annot_kws={"size": 12}
+        annot_kws={"size": 10 * FONT_SCALE}  # Smaller font size for heatmap values
     )
-    plt.title(f'{title_base} - Synthetic Data Utility Scores', fontsize=14, pad=20)
-    ax.set_xlabel('Synthetic Dataset', fontsize=14, labelpad=10)
-    ax.set_ylabel('Model', fontsize=14, labelpad=10)
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
+    ax.set_xlabel('Synthetic Dataset', fontsize=18 * FONT_SCALE, labelpad=10)
+    ax.set_ylabel('Model', fontsize=18 * FONT_SCALE, labelpad=10)
+    plt.xticks(fontsize=16 * FONT_SCALE)
+    plt.yticks(fontsize=16 * FONT_SCALE)
+    cbar = ax.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14 * FONT_SCALE)
+    cbar.ax.yaxis.label.set_size(16 * FONT_SCALE)
     for _, spine in ax.spines.items():
         spine.set_visible(True)
         spine.set_linewidth(1.0)
@@ -299,13 +341,13 @@ def plot_utility_scores(utility_df, target, mode, output_dir):
         color=[colors[i] for i in range(len(datasets))],
         width=0.4
     )
-    plt.title(f'{title_base} - Average Synthetic Data Utility', fontsize=16)
-    plt.xlabel('Synthetic Dataset', fontsize=14)
-    plt.ylabel('Average Utility Score', fontsize=14)
+    plt.xlabel('Synthetic Dataset', fontsize=18 * FONT_SCALE)
+    plt.ylabel('Average Utility Score', fontsize=18 * FONT_SCALE)
     plt.ylim(0, 1)
     plt.grid(axis='y', alpha=0.3)
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=16 * FONT_SCALE)
+    plt.yticks(fontsize=16 * FONT_SCALE)
+    # Add value labels with smaller font size
     for bar in bars:
         height = bar.get_height()
         plt.text(
@@ -313,7 +355,7 @@ def plot_utility_scores(utility_df, target, mode, output_dir):
             height + 0.02,
             f'{height:.2f}',
             ha='center',
-            fontsize=12
+            fontsize=10 * FONT_SCALE  # Smaller font size for values
         )
     plt.tight_layout()
     plt.savefig(
@@ -385,18 +427,22 @@ def plot_feature_importances(importance_df, target, mode, output_dir, top_n=15):
                         label = f"{label_mapping[k]}: {cat}"
                         break
             readable_labels.append(label)
-        ax.set_yticklabels(readable_labels, fontsize=10)
+        ax.set_yticklabels(readable_labels, fontsize=14 * FONT_SCALE)
         ax.set_xlim(0, comp_df.values.max() * 1.1)
-        plt.title(f'Feature Importance - {model}\n{title_base}', fontsize=14)
-        plt.xlabel('Normalized Importance', fontsize=12)
+        plt.xlabel('Normalized Importance', fontsize=18 * FONT_SCALE)
+        plt.xticks(fontsize=14 * FONT_SCALE)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles[::-1], labels[::-1], title='Dataset', loc='lower right', fontsize=10)
+        ax.legend(handles[::-1], labels[::-1], title='Dataset', loc='lower right', 
+                  fontsize=14 * FONT_SCALE, title_fontsize=16 * FONT_SCALE)
         plt.grid(axis='x', alpha=0.3)
         plt.tight_layout()
+        
+        # Use short model name in filename
+        short_model_name = get_short_model_name(model)
         plt.savefig(
             os.path.join(
                 importance_dir,
-                f"{target.lower()}_{mode}_{model.replace(' ', '_')}_feature_comparison.{FIG_FORMAT}"
+                f"{target.lower()}_{mode}_{short_model_name.replace(' ', '_')}_feature_comparison.{FIG_FORMAT}"
             ),
             format=FIG_FORMAT,
             dpi=300,
@@ -433,12 +479,13 @@ def plot_feature_importances(importance_df, target, mode, output_dir, top_n=15):
                     label = f"{label_mapping[k]}: {cat}"
                     break
         readable_labels.append(label)
-    ax.set_yticklabels(readable_labels, fontsize=10)
+    ax.set_yticklabels(readable_labels, fontsize=14 * FONT_SCALE)
     ax.set_xlim(0, all_comp.values.max() * 1.1)
-    plt.title(f'Average Feature Importance Across All Models\n{title_base}', fontsize=14)
-    plt.xlabel('Normalized Importance', fontsize=12)
+    plt.xlabel('Normalized Importance', fontsize=18 * FONT_SCALE)
+    plt.xticks(fontsize=14 * FONT_SCALE)
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles[::-1], labels[::-1], title='Dataset', loc='lower right', fontsize=10)
+    ax.legend(handles[::-1], labels[::-1], title='Dataset', loc='lower right', 
+              fontsize=14 * FONT_SCALE, title_fontsize=16 * FONT_SCALE)
     plt.grid(axis='x', alpha=0.3)
     plt.tight_layout()
     plt.savefig(
@@ -468,6 +515,8 @@ def calculate_feature_importance_alignment(importance_df, target, mode, output_d
     os.makedirs(alignment_dir, exist_ok=True)
     
     models = filtered_df['Model'].unique()
+    # Get short model names for alignment plots
+    short_models = [get_short_model_name(model) for model in models]
     datasets = filtered_df['Dataset'].unique()
     if 'Real' not in datasets:
         print(f"Real dataset not found for {target} with {mode}")
@@ -515,10 +564,12 @@ def calculate_feature_importance_alignment(importance_df, target, mode, output_d
     
     avg_scores = alignment_df.groupby('Dataset')[['CosineSimScore', 'CorrelationScore']].mean().reset_index()
     
-    # Heatmap of cosine similarity
+    # Heatmap of cosine similarity with short model names
     plt.figure(figsize=(12, 8))
     cos_heat = alignment_df.pivot(index='Model', columns='Dataset', values='CosineSimScore')
     cos_heat = cos_heat[synthetic_datasets]
+    # Replace model names with short versions for the heatmap
+    cos_heat.index = [get_short_model_name(model) for model in cos_heat.index]
     ax = sns.heatmap(
         cos_heat,
         annot=True,
@@ -529,13 +580,15 @@ def calculate_feature_importance_alignment(importance_df, target, mode, output_d
         cbar_kws={'label': 'Cosine Similarity Score (higher is better)'},
         linewidths=0.5,
         linecolor='white',
-        annot_kws={"size": 12}
+        annot_kws={"size": 10 * FONT_SCALE}  # Smaller font size for heatmap values
     )
-    plt.title(f'{title_base} - Feature Importance Alignment (Cosine Similarity)', fontsize=14)
-    plt.xlabel('Synthetic Dataset', fontsize=12)
-    plt.ylabel('Model', fontsize=12)
-    plt.xticks(fontsize=11)
-    plt.yticks(fontsize=11)
+    plt.xlabel('Synthetic Dataset', fontsize=18 * FONT_SCALE)
+    plt.ylabel('Model', fontsize=18 * FONT_SCALE)
+    plt.xticks(fontsize=16 * FONT_SCALE)
+    plt.yticks(fontsize=16 * FONT_SCALE)
+    cbar = ax.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14 * FONT_SCALE)
+    cbar.ax.yaxis.label.set_size(16 * FONT_SCALE)
     for _, spine in ax.spines.items():
         spine.set_visible(True)
         spine.set_linewidth(1.0)
@@ -570,17 +623,15 @@ def calculate_feature_importance_alignment(importance_df, target, mode, output_d
             h + 0.02,
             f'{h:.2f}',
             ha='center',
-            fontsize=12
+            fontsize=16 * FONT_SCALE
         )
-    plt.title(f'{title_base} - Average Feature Importance Alignment', fontsize=14)
-    plt.xlabel('Synthetic Dataset', fontsize=12)
-    plt.ylabel('Cosine Similarity Score', fontsize=12)
+    plt.xlabel('Synthetic Dataset', fontsize=18 * FONT_SCALE)
+    plt.ylabel('Cosine Similarity Score', fontsize=18 * FONT_SCALE)
     plt.ylim(0, 1.1)
     plt.grid(axis='y', alpha=0.3)
-    plt.xticks(fontsize=11)
-    plt.yticks(fontsize=11)
+    plt.xticks(fontsize=16 * FONT_SCALE)
+    plt.yticks(fontsize=16 * FONT_SCALE)
     plt.axhline(y=1.0, color='r', linestyle='--', alpha=0.5)
-    plt.text(0.02, 1.02, 'Perfect Alignment', color='r', fontsize=10)
     plt.tight_layout()
     plt.savefig(
         os.path.join(
@@ -601,15 +652,19 @@ def main():
     parser = setup_argparse()
     args = parser.parse_args()
     
-    # Override global figure format
-    global FIG_FORMAT
+    # Override global figure format and font scale
+    global FIG_FORMAT, FONT_SCALE
     FIG_FORMAT = args.fig_format
+    FONT_SCALE = args.font_scale
     
     if args.output_dir is None:
         args.output_dir = os.path.join(args.results_dir, "plots")
     os.makedirs(args.output_dir, exist_ok=True)
     
     print(f"Reading evaluation results from {args.results_dir}")
+    print(f"Using font scale factor: {FONT_SCALE}")
+    
+    # Set matplotlib parameters with scaled font sizes
     plt.style.use('default')  # Reset to default style
     plt.rcParams.update({
         'font.family': 'sans-serif',
@@ -623,10 +678,19 @@ def main():
         'savefig.pad_inches': 0.1,
         'axes.labelweight': 'normal',
         'axes.titleweight': 'normal',
-        'xtick.labelsize': 10,
-        'ytick.labelsize': 10,
-        'axes.labelsize': 12,
-        'axes.titlesize': 14
+        'xtick.labelsize': 14 * FONT_SCALE,
+        'ytick.labelsize': 14 * FONT_SCALE,
+        'axes.labelsize': 18 * FONT_SCALE,
+        'axes.titlesize': 20 * FONT_SCALE,
+        'legend.fontsize': 14 * FONT_SCALE,
+        'legend.title_fontsize': 16 * FONT_SCALE,
+        'font.size': 14 * FONT_SCALE,
+        'axes.linewidth': 1.5,
+        'xtick.major.width': 1.5,
+        'ytick.major.width': 1.5,
+        'xtick.major.size': 6,
+        'ytick.major.size': 6,
+        'grid.linewidth': 0.8
     })
     
     performance_path = os.path.join(args.results_dir, 'all_performance_results.csv')
@@ -683,4 +747,6 @@ if __name__ == "__main__":
 
 
 # Example usage:
-# python scripts/generate_tstr_plots.py --results_dir tstr_results --output_dir tstr_plots
+# python scripts/generate_tstr_plots.py --results_dir tstr_results --output_dir tstr_plots --font_scale 1.5
+# For even larger fonts for presentations: --font_scale 2.0
+# For standard size (original): --font_scale 1.0

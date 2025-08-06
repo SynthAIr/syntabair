@@ -15,6 +15,7 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -52,8 +53,8 @@ def setup_argparse():
         "--plot_formats",
         type=str,
         nargs="+",
-        default=["png"],
-        choices=["png", "pdf", "svg"],
+        default=["pdf"],
+        choices=["png", "pdf", "svg", "jpg", "jpeg"],  # Added jpg and jpeg
         help="Output formats for the plots"
     )
     parser.add_argument(
@@ -62,6 +63,17 @@ def setup_argparse():
         default="whitegrid",
         choices=["darkgrid", "whitegrid", "dark", "white", "ticks"],
         help="Seaborn plot style"
+    )
+    parser.add_argument(
+        "--font_scale",
+        type=float,
+        default=1.5,
+        help="Font size scaling factor (default: 1.5)"
+    )
+    parser.add_argument(
+        "--no_titles",
+        action="store_false",
+        help="Remove titles from all plots"
     )
     
     return parser
@@ -295,7 +307,34 @@ def normalize_metric_value(value, metric_info):
         return (value - min_val) / (max_val - min_val)
 
 
-def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info):
+def save_plot(filename_base, output_dir, plot_formats):
+    """
+    Save the current plot in all requested formats
+    
+    Args:
+        filename_base (str): Base filename without extension
+        output_dir (str): Output directory
+        plot_formats (list): List of output formats
+    """
+    for fmt in plot_formats:
+        # Handle jpeg as jpg
+        if fmt == 'jpeg':
+            fmt = 'jpg'
+        
+        filename = os.path.join(output_dir, f"{filename_base}.{fmt}")
+        
+        # Use different DPI settings for different formats
+        if fmt in ['jpg', 'jpeg', 'png']:
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        elif fmt == 'pdf':
+            plt.savefig(filename, dpi=300, bbox_inches='tight', format='pdf')
+        elif fmt == 'svg':
+            plt.savefig(filename, bbox_inches='tight', format='svg')
+        else:
+            plt.savefig(filename, bbox_inches='tight')
+
+
+def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info, font_scale=1.0, no_titles=False):
     """
     Create bar charts for each metric
     
@@ -305,6 +344,8 @@ def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info)
         output_dir (str): Output directory
         plot_formats (list): List of output formats
         metric_info (dict): Metric information dictionary
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     datasets = results_df['Dataset'].values
     colors = get_custom_color_palette(len(datasets))
@@ -364,7 +405,7 @@ def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info)
                     value_text,
                     ha='center',
                     va=va,
-                    fontsize=10
+                    fontsize=10 * font_scale
                 )
         
         # Set y-axis limits based on metric type
@@ -378,11 +419,16 @@ def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info)
             plt.ylim(y_min, y_max)
         
         # Set labels and title
-        plt.xlabel('Synthetic Data Model', fontsize=12)
-        plt.ylabel(f'{display_info["display_name"]}', fontsize=12)
+        plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+        plt.ylabel(f'{display_info["display_name"]}', fontsize=12 * font_scale)
         
         # Use the new title field instead of constructing from display_name and goal
-        plt.title(f'{display_info["title"]}', fontsize=14)
+        if not no_titles:
+            plt.title(f'{display_info["title"]}', fontsize=14 * font_scale)
+        
+        # Scale tick labels
+        plt.xticks(fontsize=10 * font_scale)
+        plt.yticks(fontsize=10 * font_scale)
         
         # Add grid for readability
         plt.grid(axis='y', alpha=0.3)
@@ -390,14 +436,12 @@ def plot_metric_bars(results_df, metrics, output_dir, plot_formats, metric_info)
         plt.tight_layout()
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"{metric}.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot(metric, output_dir, plot_formats)
             
         plt.close()
 
 
-def plot_correlation_matrix_comparison(results_df, output_dir, plot_formats):
+def plot_correlation_matrix_comparison(results_df, output_dir, plot_formats, font_scale=1.0, no_titles=False):
     """
     Create a visualization comparing correlation matrices if CorrelationMatrixDistance is present
     
@@ -405,6 +449,8 @@ def plot_correlation_matrix_comparison(results_df, output_dir, plot_formats):
         results_df (pd.DataFrame): Results dataframe
         output_dir (str): Output directory
         plot_formats (list): List of output formats
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     # Check if CorrelationMatrixDistance is present
     if 'CorrelationMatrixDistance' not in results_df.columns:
@@ -437,13 +483,18 @@ def plot_correlation_matrix_comparison(results_df, output_dir, plot_formats):
             f'{height:.3f}',
             ha='center', 
             va='bottom',
-            fontsize=10
+            fontsize=10 * font_scale
         )
     
     # Set labels and title
-    plt.xlabel('Synthetic Data Model', fontsize=12)
-    plt.ylabel('Correlation Matrix Similarity Score', fontsize=12)
-    plt.title(f'Correlation Matrix Similarity (Best: {best_model})', fontsize=14)
+    plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+    plt.ylabel('Correlation Matrix Similarity Score', fontsize=12 * font_scale)
+    if not no_titles:
+        plt.title(f'Correlation Matrix Similarity (Best: {best_model})', fontsize=14 * font_scale)
+    
+    # Scale tick labels
+    plt.xticks(fontsize=10 * font_scale)
+    plt.yticks(fontsize=10 * font_scale)
     
     # Add grid for readability
     plt.grid(axis='y', alpha=0.3)
@@ -452,14 +503,12 @@ def plot_correlation_matrix_comparison(results_df, output_dir, plot_formats):
     plt.tight_layout()
     
     # Save the plot in each format
-    for fmt in plot_formats:
-        filename = os.path.join(output_dir, f"correlation_matrix_comparison.{fmt}")
-        plt.savefig(filename, dpi=300, bbox_inches='tight')
+    save_plot("correlation_matrix_comparison", output_dir, plot_formats)
         
     plt.close()
 
 
-def plot_normalized_radar(results_df, metrics_by_category, output_dir, plot_formats, metric_info):
+def plot_normalized_radar(results_df, metrics_by_category, output_dir, plot_formats, metric_info, font_scale=1.0, no_titles=False):
     """
     Create radar charts for each category of metrics
     
@@ -469,6 +518,8 @@ def plot_normalized_radar(results_df, metrics_by_category, output_dir, plot_form
         output_dir (str): Output directory
         plot_formats (list): List of output formats
         metric_info (dict): Metric information dictionary
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     datasets = results_df['Dataset'].values
     colors = get_custom_color_palette(len(datasets))
@@ -524,31 +575,30 @@ def plot_normalized_radar(results_df, metrics_by_category, output_dir, plot_form
         ax.set_theta_direction(-1)
         
         # Set labels
-        plt.xticks(angles[:-1], display_names[:-1], fontsize=10)
+        plt.xticks(angles[:-1], display_names[:-1], fontsize=10 * font_scale)
         
         # Draw y-axis labels (0.2, 0.4, 0.6, 0.8, 1.0)
         ax.set_rlabel_position(0)
         ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.set_yticklabels(["0.2", "0.4", "0.6", "0.8", "1.0"], fontsize=8)
+        ax.set_yticklabels(["0.2", "0.4", "0.6", "0.8", "1.0"], fontsize=8 * font_scale)
         
         # Set y-axis limits
         plt.ylim(0, 1)
         
         # Add legend
-        plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), fontsize=10)
+        plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), fontsize=10 * font_scale)
         
         # Add title
-        plt.title(f"{category.title()} Metrics Comparison", fontsize=14)
+        if not no_titles:
+            plt.title(f"{category.title()} Metrics Comparison", fontsize=14 * font_scale)
         
         # Save the plot in each format
-        for fmt in plot_formats:
-            filename = os.path.join(output_dir, f"radar_{category}.{fmt}")
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
+        save_plot(f"radar_{category}", output_dir, plot_formats)
             
         plt.close()
 
 
-def plot_heatmap(results_df, categories, output_dir, plot_formats, metric_info):
+def plot_heatmap(results_df, categories, output_dir, plot_formats, metric_info, font_scale=1.0, no_titles=False):
     """
     Create a heatmap with all metrics, with datasets on the x-axis
     
@@ -558,6 +608,8 @@ def plot_heatmap(results_df, categories, output_dir, plot_formats, metric_info):
         output_dir (str): Output directory
         plot_formats (list): List of output formats
         metric_info (dict): Metric information dictionary
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     # Get all metrics
     all_metrics = []
@@ -626,8 +678,14 @@ def plot_heatmap(results_df, categories, output_dir, plot_formats, metric_info):
         vmin=0, 
         vmax=1,
         fmt='.2f',
+        annot_kws={'fontsize': 9 * font_scale},
         cbar_kws={'label': 'Normalized Score (higher is better)'}
     )
+    
+    # Scale colorbar label
+    cbar = ax.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=10 * font_scale)
+    cbar.set_label('Normalized Score (higher is better)', fontsize=11 * font_scale)
     
     # Add horizontal lines between metric categories
     category_boundaries = []
@@ -662,31 +720,30 @@ def plot_heatmap(results_df, categories, output_dir, plot_formats, metric_info):
                 category.upper(), 
                 verticalalignment='center',
                 horizontalalignment='right',
-                fontsize=12,
+                fontsize=12 * font_scale,
                 fontweight='bold',
                 rotation=90
             )
             current_pos += len(category_metrics)
     
     # Set title
-    plt.title('Synthetic Data Fidelity Metrics Comparison', fontsize=16, pad=20)
+    if not no_titles:
+        plt.title('Synthetic Data Fidelity Metrics Comparison', fontsize=16 * font_scale, pad=20)
     
     # Improve tick label sizes and orientation
-    # plt.xticks(fontsize=12)
-    # plt.yticks(fontsize=10)
+    plt.xticks(fontsize=12 * font_scale)
+    plt.yticks(fontsize=10 * font_scale)
     # Remove the y-axis label (which would show "Metric")
     plt.ylabel('')
     plt.tight_layout()
     
     # Save the plot in each format
-    for fmt in plot_formats:
-        filename = os.path.join(output_dir, f"fidelity_heatmap.{fmt}")
-        plt.savefig(filename, dpi=300, bbox_inches='tight')
+    save_plot("fidelity_heatmap", output_dir, plot_formats)
         
     plt.close()
 
 
-def plot_aggregated_scores(results_df, categories, output_dir, plot_formats, metric_info):
+def plot_aggregated_scores(results_df, categories, output_dir, plot_formats, metric_info, font_scale=1.0, no_titles=False):
     """
     Create a bar chart with aggregated scores by category
     
@@ -696,6 +753,8 @@ def plot_aggregated_scores(results_df, categories, output_dir, plot_formats, met
         output_dir (str): Output directory
         plot_formats (list): List of output formats
         metric_info (dict): Metric information dictionary
+        font_scale (float): Font size scaling factor
+        no_titles (bool): Whether to omit titles
     """
     datasets = results_df['Dataset'].values
     colors = get_custom_color_palette(len(datasets))
@@ -763,15 +822,20 @@ def plot_aggregated_scores(results_df, categories, output_dir, plot_formats, met
     
     # Add value labels on top of bars
     for container in ax.containers:
-        ax.bar_label(container, fmt='%.2f', fontsize=9)
+        ax.bar_label(container, fmt='%.2f', fontsize=9 * font_scale)
     
     # Set labels and title
-    plt.xlabel('Synthetic Data Model', fontsize=12)
-    plt.ylabel('Aggregated Score (0-1)', fontsize=12)
-    plt.title('Aggregated Fidelity Scores by Category', fontsize=14)
+    plt.xlabel('Synthetic Data Model', fontsize=12 * font_scale)
+    plt.ylabel('Aggregated Score (0-1)', fontsize=12 * font_scale)
+    if not no_titles:
+        plt.title('Aggregated Fidelity Scores by Category', fontsize=14 * font_scale)
+    
+    # Scale tick labels
+    plt.xticks(fontsize=10 * font_scale)
+    plt.yticks(fontsize=10 * font_scale)
     
     # Improve legend
-    plt.legend(title='Category', fontsize=10, title_fontsize=12)
+    plt.legend(title='Category', fontsize=10 * font_scale, title_fontsize=12 * font_scale)
     
     # Add grid for readability
     plt.grid(axis='y', alpha=0.3)
@@ -779,9 +843,7 @@ def plot_aggregated_scores(results_df, categories, output_dir, plot_formats, met
     plt.tight_layout()
     
     # Save the plot in each format
-    for fmt in plot_formats:
-        filename = os.path.join(output_dir, f"aggregated_scores.{fmt}")
-        plt.savefig(filename, dpi=300, bbox_inches='tight')
+    save_plot("aggregated_scores", output_dir, plot_formats)
         
     plt.close()
 
@@ -801,6 +863,18 @@ def main():
     
     # Set plot style
     sns.set_style(args.style)
+    
+    # Set base font sizes with matplotlib rcParams
+    base_font_size = 10
+    plt.rcParams.update({
+        'font.size': base_font_size * args.font_scale,
+        'axes.titlesize': 14 * args.font_scale,
+        'axes.labelsize': 12 * args.font_scale,
+        'xtick.labelsize': 10 * args.font_scale,
+        'ytick.labelsize': 10 * args.font_scale,
+        'legend.fontsize': 10 * args.font_scale,
+        'legend.title_fontsize': 12 * args.font_scale
+    })
     
     # Read results from CSV file
     print(f"Reading evaluation results from {args.results_path}")
@@ -828,24 +902,29 @@ def main():
     
     # Plot individual metric bar charts
     print("Generating individual metric bar charts...")
-    plot_metric_bars(results_df, all_metrics, args.output_dir, args.plot_formats, metric_info)
+    plot_metric_bars(results_df, all_metrics, args.output_dir, args.plot_formats, metric_info, 
+                    args.font_scale, args.no_titles)
     
     # Plot special correlation matrix comparison if it exists
     if 'correlation' in categories and 'CorrelationMatrixDistance' in results_df.columns:
         print("Generating correlation matrix comparison...")
-        plot_correlation_matrix_comparison(results_df, args.output_dir, args.plot_formats)
+        plot_correlation_matrix_comparison(results_df, args.output_dir, args.plot_formats, 
+                                         args.font_scale, args.no_titles)
     
     # Plot radar charts by category
     print("Generating radar charts...")
-    plot_normalized_radar(results_df, metrics_by_category, args.output_dir, args.plot_formats, metric_info)
+    plot_normalized_radar(results_df, metrics_by_category, args.output_dir, args.plot_formats, 
+                         metric_info, args.font_scale, args.no_titles)
     
     # Plot overall heatmap
     print("Generating heatmap...")
-    plot_heatmap(results_df, categories, args.output_dir, args.plot_formats, metric_info)
+    plot_heatmap(results_df, categories, args.output_dir, args.plot_formats, metric_info, 
+                args.font_scale, args.no_titles)
     
     # Plot aggregated scores
     print("Generating aggregated scores chart...")
-    plot_aggregated_scores(results_df, categories, args.output_dir, args.plot_formats, metric_info)
+    plot_aggregated_scores(results_df, categories, args.output_dir, args.plot_formats, metric_info, 
+                          args.font_scale, args.no_titles)
     
     print(f"All plots generated and saved to {args.output_dir}")
 
@@ -857,3 +936,7 @@ if __name__ == "__main__":
 # python scripts/generate_fidelity_plots.py --results_path results/fidelity_results/fidelity_results.csv --output_dir fidelity_plots --metrics statistical correlation distribution detection likelihood
 # Example usage:
 # python scripts/generate_fidelity_plots.py --results_path results/fidelity/fidelity_results.csv --output_dir results/fidelity/plots --metrics statistical distribution likelihood
+# Example with multiple formats:
+# python scripts/generate_fidelity_plots.py --results_path results/fidelity/fidelity_results.csv --output_dir results/fidelity/plots --plot_formats png pdf jpg
+# Example with font scaling and no titles:
+# python scripts/generate_fidelity_plots.py --results_path results/fidelity/fidelity_results.csv --output_dir results/fidelity/plots --font_scale 1.5 --no_titles
