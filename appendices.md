@@ -24,9 +24,9 @@ where $F_i$ is the fitted CDF for variable $i$ and $\Phi^{-1}$ is the inverse st
 
 The correlation structure is then captured by computing the correlation matrix $\mathbf{R}$ of the transformed variables $\{Z_1, ..., Z_d\}$. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, let $u_i = F_i(X_i)$ represent the probability integral transforms. The joint distribution is then modeled using the Gaussian copula:
 
-$$C_{\mathbf{R}}(u_1, ..., u_d) = \Phi_{\mathbf{R}}(\Phi^{-1}(u_1), ..., \Phi^{-1}(u_d))$$
+$$C_ {\mathbf{R}}(u_1, ..., u_d) = \Phi_ {\mathbf{R}}(\Phi^{-1}(u_1), ..., \Phi^{-1}(u_d))$$
 
-where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distribution with correlation matrix $\mathbf{R}$.
+where $\Phi_ {\mathbf{R}}$ represents the CDF of a multivariate normal distribution with correlation matrix $\mathbf{R}$.
 
 ### Synthetic Data Generation
 
@@ -72,7 +72,7 @@ The conditional component addresses severe category imbalance in aviation data:
 
 **Training-by-Sampling**: Uses log-frequency sampling to ensure rare categories receive adequate training:
 
-$$P(c_i) = \frac{\log(f_i) + 1}{\sum_j (\log(f_j) + 1)}$$
+$$P(c_i) = \frac{\log(f_i) + 1}{\sum_ j (\log(f_j) + 1)}$$
 
 where $f_i$ is the frequency of category $i$
 
@@ -97,10 +97,11 @@ The core generative components consist of:
 - **PacGAN Framework**: Processes 10 samples jointly to prevent mode collapse
 - **Architecture**: Two hidden layers (256 neurons) with LeakyReLU ($\alpha$=0.2) and dropout (0.5)
 - **WGAN-GP Loss**: Wasserstein loss with gradient penalty:
-  $$\mathcal{L}_D = -(\mathbb{E}[D(\text{real})] - \mathbb{E}[D(\text{fake})]) + \lambda \cdot GP$$
+  $$\mathcal{L}_ D = -(\mathbb{E}[D(\text{real})] - \mathbb{E}[D(\text{fake})]) + \lambda \cdot GP$$
 
   where the gradient penalty term:
-  $$GP = \mathbb{E}_{\hat{x}} \left[ (||\nabla_{\hat{x}} D(\hat{x})||_2 - 1)^2 \right]$$
+
+  $$GP = \mathbb{E}_ {\hat{x}} \left[ (\|\nabla_ {\hat{x}} D(\hat{x})\|_ 2 - 1)^2 \right]$$
 
   with $\hat{x}$ interpolated between real and fake samples, and $\lambda = 10$
 
@@ -120,8 +121,8 @@ The training process follows these steps:
    - Generate fake samples: $G(z, c)$ where $z \sim \mathcal{N}(0, I)$ and $c$ is the condition
    - Update discriminator with WGAN-GP loss
    - Update generator with combined loss:
-     $$\mathcal{L}_G = -\mathbb{E}[D(G(z,c))] + \mathcal{L}_{\text{cond}}$$
-     where $\mathcal{L}_{\text{cond}}$ is cross-entropy between generated categories and condition
+     $$\mathcal{L}_ G = -\mathbb{E}[D(G(z,c))] + \mathcal{L}_ {\text{cond}}$$
+     where $\mathcal{L}_ {\text{cond}}$ is cross-entropy between generated categories and condition
 
 ### Implementation Details
 
@@ -175,9 +176,9 @@ The diffusion component operates entirely in the continuous latent space:
 
 **Denoising Network**: A 3-layer MLP with SiLU activations and 1024 hidden dimensions learns to reverse the diffusion process. The network incorporates positional embeddings to encode the noise level at each step. Training minimizes the Elucidating Diffusion Model (EDM) loss:
 
-$$\mathcal{L}_{\text{EDM}} = \mathbb{E}_{z_0, t, \epsilon} \left[ \lambda(t) \|s_\theta(z_t, t) - \epsilon\|_2^2 \right]$$
+$$\mathcal{L}_ {\text{EDM}} = \mathbb{E}_ {z_0, t, \epsilon} \left[ \lambda(t) \|s_ \theta(z_t, t) - \epsilon\|_ 2^2 \right]$$
 
-where $z_t$ is the noisy latent at time $t$, $s_\theta$ is the denoising network, and $\lambda(t)$ is a weighting function derived from the noise schedule.
+where $z_t$ is the noisy latent at time $t$, $s_ \theta$ is the denoising network, and $\lambda(t)$ is a weighting function derived from the noise schedule.
 
 **Efficient Sampling**: The linear noise schedule enables generation with only 20-50 reverse diffusion steps, compared to thousands required by traditional diffusion approaches operating in data space.
 
@@ -197,7 +198,7 @@ TabSyn employs a sequential two-phase training process:
 
 The VAE is trained end-to-end with an adaptive KL-divergence weighting:
 
-$$\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta(t) \cdot \mathcal{L}_{\text{KL}}$$
+$$\mathcal{L}_ {\text{VAE}} = \mathcal{L}_ {\text{recon}} + \beta(t) \cdot \mathcal{L}_ {\text{KL}}$$
 
 where:
 - Reconstruction loss combines MSE for numerical features and cross-entropy for categorical features
@@ -215,7 +216,7 @@ where:
 
 1. Sample initial noise: $z_T \sim \mathcal{N}(0, I)$ matching VAE latent dimensions
 2. Apply discretized reverse SDE for $T$ steps (typically 50):
-   $$z_{t-1} = z_t - \sigma_t(\sigma_t - \sigma_{t-1}) \cdot s_\theta(z_t, \sigma_t)$$
+   $$z_{t-1} = z_t - \sigma_t(\sigma_t - \sigma_{t-1}) \cdot s_ \theta(z_t, \sigma_t)$$
 3. Scale and shift final $z_0$ to match training embedding distribution
 4. Pass through VAE decoder to obtain synthetic tabular records
 
@@ -278,9 +279,9 @@ The monitoring system ensures generation quality:
 
 **Q<sub>δ</sub> Statistic**: Measures dissimilarity between synthetic and real data distributions:
 
-$$Q_\delta = \frac{1}{N}\sum_{q} |p_q - q|$$
+$$Q_ \delta = \frac{1}{N}\sum_ {q} |p_ q - q|$$
 
-where $q$ is a quantile in the evaluation set and $p_q$ is the proportion of synthetic samples below the value at quantile $q$
+where $q$ is a quantile in the evaluation set and $p_ q$ is the proportion of synthetic samples below the value at quantile $q$
 
 **Distance to Closest Record (DCR)**: Evaluates whether synthetic samples are copies of training data
 
@@ -291,7 +292,7 @@ where $q$ is a quantile in the evaluation set and $p_q$ is the proportion of syn
 1. **Data Preprocessing**: Transform flight data using mode-specific strategies for continuous variables and tokenization for categorical columns
 2. **Vocabulary Construction**: Build column-specific vocabularies with special tokens
 3. **Autoregressive Training**: Train the model to predict next token given previous tokens:
-   $$\mathcal{L} = -\sum_{i=1}^{n} \log P(x_i | x_1, ..., x_{i-1})$$
+   $$\mathcal{L} = -\sum_ {i=1}^{n} \log P(x_i | x_1, ..., x_{i-1})$$
 4. **Overfitting Monitoring**: Evaluate Q<sub>δ</sub> statistic every 5 epochs and save checkpoints at optimal points
 
 ### Generation Process
